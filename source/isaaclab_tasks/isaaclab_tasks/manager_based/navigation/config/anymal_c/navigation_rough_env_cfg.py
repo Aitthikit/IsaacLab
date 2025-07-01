@@ -16,10 +16,10 @@ from isaaclab.utils import configclass
 from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR
 
 import isaaclab_tasks.manager_based.navigation.mdp as mdp
-from isaaclab_tasks.manager_based.locomotion.velocity.config.anymal_c.flat_env_cfg import AnymalCFlatEnvCfg
+from isaaclab_tasks.manager_based.locomotion.velocity.config.anymal_c.flat_env_cfg import AnymalCRoughEnvCfg
 # from isaaclab_tasks.direct.anymal_c.anymal_c_env_cfg import AnymalCRoughEnvCfg
 
-LOW_LEVEL_ENV_CFG = AnymalCFlatEnvCfg()
+LOW_LEVEL_ENV_CFG = AnymalCRoughEnvCfg()
 # LOW_LEVEL_ROUGH_ENV_CFG = AnymalCRoughEnvCfg()
 
 
@@ -50,8 +50,8 @@ class ActionsCfg:
 
     pre_trained_policy_action: mdp.PreTrainedPolicyActionCfg = mdp.PreTrainedPolicyActionCfg(
         asset_name="robot",
-        policy_path=f"{ISAACLAB_NUCLEUS_DIR}/Policies/ANYmal-C/Blind/policy.pt",
-        # policy_path="/home/robotics01/Documents/Big/IsaacLab/logs/rsl_rl/anymal_c_flat/2025-06-05_13-56-21/model_299.pt",
+        # policy_path=f"{ISAACLAB_NUCLEUS_DIR}/Policies/ANYmal-C/Blind/policy.pt",
+        policy_path= "/home/robotics01/Documents/Big/IsaacLab/logs/rsl_rl/anymal_c_rough/2025-06-05_12-28-34/model_1350.pt",
         low_level_decimation=4,
         low_level_actions=LOW_LEVEL_ENV_CFG.actions.joint_pos,
         low_level_observations=LOW_LEVEL_ENV_CFG.observations.policy,

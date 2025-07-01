@@ -146,8 +146,12 @@ def main():
         with torch.inference_mode():
             # agent stepping
             actions = policy(obs)
+            # actions = torch.zeros_like(actions)
+            # print(f'Robot state:{obs}')
+            # print(f'Robot action:{actions}')
             # env stepping
             obs, _, _, _ = env.step(actions)
+            
         if args_cli.video:
             timestep += 1
             # Exit the play loop after recording one video
