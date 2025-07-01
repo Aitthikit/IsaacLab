@@ -119,11 +119,7 @@ class AnymalDEnvPos(DirectRLEnv):
         commandobs = torch.clone(self._commands)
         commandobs[:, :3] = self._commands[:, :3]-self._robot.data.root_pos_w[:, :3]
         commandobs[:, 3] = torch.abs(self._robot.data.heading_w - ((self._commands[:,3] + torch.pi) % (2 * torch.pi) - torch.pi))
-        # commandobs[:, :3] = self._commands[:, :3]
-        # commandobs[:, 3] = (self._commands[:,3] + torch.pi) % (2 * torch.pi) - torch.pi
         commandobs[:,4] = (self._commands[:,4] - self.episode_length_buf)/50
-
-        # print(commandobs)
         obs = torch.cat(
             [
                 tensor
@@ -162,26 +158,6 @@ class AnymalDEnvPos(DirectRLEnv):
         joint_velo_limit = torch.sum(torch.maximum(torch.abs(self._robot.data.joint_vel)-self._robot.data.joint_vel_limits,torch.zeros_like(self._robot.data.joint_vel)),dim=1)
         # joint torque limit
         joint_torque_limit = torch.sum(torch.maximum(torch.abs(self._robot.data.applied_torque)-self._robot.data.joint_effort_limits,torch.zeros_like(self._robot.data.joint_vel)),dim=1)
-        # heading tracking
-        # desired_heading = torch.atan2(self._commands[:, 1] - self._robot.data.root_pos_w[:, 1], self._commands[:, 0] - self._robot.data.root_pos_w[:, 0])
-        # yaw = torch.atan2(2.0 * (self._robot.data.body_com_quat_w[:,self._base_id,3] * 
-        #                          self._robot.data.body_com_quat_w[:,self._base_id,2] + 
-        #                          self._robot.data.body_com_quat_w[:,self._base_id,0] * 
-        #                          self._robot.data.body_com_quat_w[:,self._base_id,1]),
-        #                          1.0 - 2.0 * 
-        #                          (self._robot.data.body_com_quat_w[:,self._base_id,1] * 
-        #                             self._robot.data.body_com_quat_w[:,self._base_id,1] + 
-        #                             self._robot.data.body_com_quat_w[:,self._base_id,2] * 
-        #                             self._robot.data.body_com_quat_w[:,self._base_id,2])).squeeze()
-        # yaw = torch.atan2(2.0 * (self._robot.data.body_com_quat_w[:,self._base_id,0] * 
-        #                          self._robot.data.body_com_quat_w[:,self._base_id,3] + 
-        #                          self._robot.data.body_com_quat_w[:,self._base_id,1] * 
-        #                          self._robot.data.body_com_quat_w[:,self._base_id,2]),
-        #                          1.0 - 2.0 * 
-        #                          (self._robot.data.body_com_quat_w[:,self._base_id,2] * 
-        #                             self._robot.data.body_com_quat_w[:,self._base_id,2] + 
-        #                             self._robot.data.body_com_quat_w[:,self._base_id,3] * 
-        #                             self._robot.data.body_com_quat_w[:,self._base_id,3])).squeeze()
         # feet accelarate
         # feet_accel = torch.sum(torch.norm(self._robot.data.body_lin_acc_w[:,13:17],dim=1),dim=1)
         feet_accel = torch.sum(torch.square(torch.norm(self._robot.data.body_lin_acc_w[:,13:17],dim=1)),dim=1)
@@ -206,19 +182,9 @@ class AnymalDEnvPos(DirectRLEnv):
         stumble_penalty = torch.where(stumble_mask, torch.full_like(stumble_mask, 1.0), torch.zeros_like(stumble_mask))
         stumble_penalty = torch.sum(stumble_penalty,dim=1)
 
-        # print(self._contact_sensor.data.net_forces_w[:, self._feet_ids,:])
-        # print(self._contact_sensor.data.force_matrix_w)
-        # flat orientation
-        # flat_orientation = torch.sum(torch.square(self._robot.data.projected_gravity_b[:, :2]), dim=1)
         # Compute time condition per environment
         time_condition = (self._commands[:,4] - self.episode_length_buf)/50 < 1
-        # time_condition = (self._commands[:,3] - self.episode_length_buf)/50 < 1 ####################
         # Compute task reward per environment
-        # reward_task = torch.where(
-        #     time_condition,
-        #     0.2 * (1.0 / (1.0 + torch.square(torch.norm(self._robot.data.root_pos_w[:, :2] - self._commands[:, :2],dim=1)))),
-        #     torch.zeros(self.num_envs, device=self.device)
-        # )
         reward_task = torch.where(
             time_condition,
             1-(0.5*torch.norm(self._robot.data.root_pos_w[:, :2] - self._commands[:, :2],dim=1)),
@@ -236,11 +202,6 @@ class AnymalDEnvPos(DirectRLEnv):
         self.reward_task_reached |= reward_task >= 0.65
         # bias reward
         if (~(self.reward_task_reached.all() and torch.mean(self.reward_buffer)> 0.5)):
-        #     # reward_bias = (
-        #     # torch.sum(self._robot.data.root_lin_vel_b[:, :3] * (self._commands[:, :3] - self._robot.data.root_pos_w[:, :3]), dim=1) /
-        #     # (torch.norm(self._robot.data.root_lin_vel_b[:, :3], dim=1) *
-        #     #  torch.norm(self._commands[:, :3] - self._robot.data.root_pos_w[:, :3], dim=1))
-        #     # )
             reward_bias = (
             torch.sum(self._robot.data.root_lin_vel_b[:, :3] * (self._commands[:, :3] - self._robot.data.root_pos_w[:, :3]), dim=1) /
             (torch.norm(self._robot.data.root_lin_vel_b[:, :3], dim=1) *
@@ -248,45 +209,30 @@ class AnymalDEnvPos(DirectRLEnv):
             )
         else:
             reward_bias = torch.zeros(self.num_envs,device=self.device)
-        # # Stand at target
+        # Stand at target
         reach_condition = torch.norm(self._robot.data.root_pos_w[:, :2] - self._commands[:, :2],dim=1) < 0.25
-        # # if reach_condition:
-        # #     r_heading = torch.zeros_like(desired_heading,device=self.device) #cancel this term when near thr target
-        # # else:
         # r_heading = torch.cos(yaw - desired_heading) #take cos for reward 
-        # reach_condition &= torch.abs(self._robot.data.heading_w-command_map) < 0.5
+        reach_condition &= torch.abs(self._robot.data.heading_w-command_map) < 0.5
         # reach_condition = torch.abs(self._robot.data.heading_w-command_map) < 0.5
         stand_target = torch.where(
             reach_condition,
             torch.exp(-torch.sum((self._robot.data.joint_pos-self._robot.data.default_joint_pos) ** 2, dim=1)),
             torch.zeros(self.num_envs, device=self.device)
         )
-        # stand_target = torch.norm(self._robot.data.joint_pos-self._robot.data.default_joint_pos,dim=1)
-        # stand_target = torch.exp(-torch.sum((self._robot.data.joint_pos-self._robot.data.default_joint_pos) ** 2, dim=1))
-
         # Compute per-env values
         velocity = torch.norm(self._robot.data.root_lin_vel_b[:, :3], dim=1)
         pos_error = torch.norm(self._commands[:, :3] - self._robot.data.root_pos_w[:, :3], dim=1)
-        # # Condition: low velocity AND high position error, per robot
-        # # stall_mask = (velocity < 0.2) & (pos_error > 0.5)
+        # Condition: low velocity AND high position error, per robot
+        # stall_mask = (velocity < 0.2) & (pos_error > 0.5)
         stall_mask = (velocity < 0.2)
-        # # Assign -1 reward where the condition is met
+        # Assign -1 reward where the condition is met
         reward_stall = torch.where(stall_mask, torch.full_like(velocity, 1.0), torch.zeros_like(velocity))
-
-        # Add bonus if goal reached before timeout
-        # done_bonus = torch.where(reach_condition & ((self.episode_length_buf)/50 < 6), 
-        #                     torch.tensor(1.0, device=self.device), 
-        #                     torch.tensor(0.0, device=self.device))
-
-        # reward_task += done_bonus
-
 
         rewards = {
             "dof_torques_l2": joint_torques * self.cfg.joint_torque_reward_scale * self.step_dt,
             "dof_vel_l2" : joint_velo * self.cfg.joint_velo_reward_scale * self.step_dt,
             "action_rate_l2": action_rate * self.cfg.action_rate_reward_scale * self.step_dt,
             "action_rate2_l2" : action_rate2 * self.cfg.action_rate2_reward_scale * self.step_dt,
-            # "heading": r_heading * self.cfg.heading_reward_scale * self.step_dt,
             "heading_command" : reward_heading  * self.cfg.heading_command_reward_scale * self.step_dt,
             "base_accel" : base_accel * self.cfg.base_accel_reward_scale * self.step_dt,
             "feet_accel" : feet_accel * self.cfg.feet_accel_reward_scale * self.step_dt,
@@ -300,8 +246,7 @@ class AnymalDEnvPos(DirectRLEnv):
             "stand_target" : self.cfg.stand_target_reward_scale * stand_target * self.step_dt,
             "velocity_limit" : self.cfg.velo_limit_reward_scale * joint_velo_limit * self.step_dt,
             "joint_limit" : self.cfg.joint_limit_reward_scale * joint_torque_limit * self.step_dt,
-            # "flat_orientation" : self.cfg.flat_orientation_reward_scale * flat_orientation * self.step_dt, 
-        }
+            }
         reward = torch.sum(torch.stack(list(rewards.values())), dim=0)
         # Logging
         for key, value in rewards.items():
@@ -343,10 +288,6 @@ class AnymalDEnvPos(DirectRLEnv):
             default_root_state = self._robot.data.default_root_state[env_ids]
             default_root_state[:, :3] += self._terrain.env_origins[env_ids]
             
-            # print(ids)
-            # print(self.valid_targets[self._terrain.terrain_levels[env_ids], self._terrain.terrain_types[env_ids],ids])
-            # print(self._terrain.env_origins)
-            # print(self.valid_targets)
         if  isinstance(self.cfg, AnymalDClimbUpEnvPosCfg):
             self._commands[env_ids,0] = self._terrain.env_origins[env_ids,0]
             self._commands[env_ids,1] = self._terrain.env_origins[env_ids,1]
@@ -367,7 +308,6 @@ class AnymalDEnvPos(DirectRLEnv):
             self._commands[env_ids,2] = 0.6
             default_root_state = self._robot.data.default_root_state[env_ids]
             default_root_state[:, :3] += self._terrain.env_origins[env_ids]
-        # self._commands[env_ids,3] = torch.rand(1,device=self.device) * 2 * torch.pi
         self._commands[env_ids,3] = angle
         self._commands[env_ids,4] = torch.tensor(self.max_episode_length,device=self.device,dtype=torch.float32)
         zeros = torch.zeros_like(self._commands[:,3],device=self.device)
