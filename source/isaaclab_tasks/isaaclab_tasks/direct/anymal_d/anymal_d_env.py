@@ -13,12 +13,10 @@ import isaaclab.sim as sim_utils
 from isaaclab.assets import Articulation
 from isaaclab.envs import DirectRLEnv
 from isaaclab.sensors import ContactSensor , RayCaster
-from isaaclab.markers.config import BLUE_ARROW_X_MARKER_CFG, FRAME_MARKER_CFG, GREEN_ARROW_X_MARKER_CFG
+from isaaclab.markers.config import GREEN_ARROW_X_MARKER_CFG
 from isaaclab.markers import VisualizationMarkers
 
-
-from .anymal_d_env_cfg import AnymalDFlatEnvCfg, AnymalDRoughEnvCfg, AnymalDClimbEnvCfg , AnymalDClimbUpEnvPosCfg , AnymalDClimbDownEnvPosCfg, AnymalDFlatEnvPosCfg
-
+from .anymal_d_env_cfg import AnymalDClimbUpEnvPosCfg , AnymalDClimbDownEnvPosCfg, AnymalDFlatEnvPosCfg
 
 class AnymalDEnvPos(DirectRLEnv):
     cfg: AnymalDFlatEnvPosCfg | AnymalDClimbUpEnvPosCfg | AnymalDClimbDownEnvPosCfg
@@ -84,7 +82,6 @@ class AnymalDEnvPos(DirectRLEnv):
         self.scene.articulations["robot"] = self._robot
         self._contact_sensor = ContactSensor(self.cfg.contact_sensor)
         self.scene.sensors["contact_sensor"] = self._contact_sensor
-        # if isinstance(self.cfg, AnymalDClimbUpEnvPosCfg) or isinstance(self.cfg, AnymalDClimbDownEnvPosCfg) or isinstance(self.cfg, AnymalDClimbDownEnvPosCfg):
         # we add a height scanner for perceptive locomotion
         self._height_scanner = RayCaster(self.cfg.height_scanner)
         self.scene.sensors["height_scanner"] = self._height_scanner
@@ -96,7 +93,7 @@ class AnymalDEnvPos(DirectRLEnv):
         # add lights
         light_cfg = sim_utils.DomeLightCfg(intensity=2000.0, color=(0.75, 0.75, 0.75))
         light_cfg.func("/World/Light", light_cfg)
-
+        # get target from terrain sampling
         # self.valid_targets: torch.Tensor = self._terrain.flat_patches["target"]
 
         
@@ -111,11 +108,10 @@ class AnymalDEnvPos(DirectRLEnv):
         ################################################################################################################
         self._previous_actions2 = self._previous_actions.clone()
         self._previous_actions = self._actions.clone()
-        height_data = None
-        # if  isinstance(self.cfg, AnymalDClimbUpEnvPosCfg) or isinstance(self.cfg, AnymalDClimbDownEnvPosCfg) or isinstance(self.cfg, AnymalDClimbDownEnvPosCfg):
         height_data = (
             self._height_scanner.data.pos_w[:, 2].unsqueeze(1) - self._height_scanner.data.ray_hits_w[..., 2] - 0.5
         ).clip(-1.0, 1.0)
+        # prepare command for obs
         commandobs = torch.clone(self._commands)
         commandobs[:, :3] = self._commands[:, :3]-self._robot.data.root_pos_w[:, :3]
         commandobs[:, 3] = torch.abs(self._robot.data.heading_w - ((self._commands[:,3] + torch.pi) % (2 * torch.pi) - torch.pi))
@@ -159,8 +155,8 @@ class AnymalDEnvPos(DirectRLEnv):
         # joint torque limit
         joint_torque_limit = torch.sum(torch.maximum(torch.abs(self._robot.data.applied_torque)-self._robot.data.joint_effort_limits,torch.zeros_like(self._robot.data.joint_vel)),dim=1)
         # feet accelarate
-        # feet_accel = torch.sum(torch.norm(self._robot.data.body_lin_acc_w[:,13:17],dim=1),dim=1)
-        feet_accel = torch.sum(torch.square(torch.norm(self._robot.data.body_lin_acc_w[:,13:17],dim=1)),dim=1)
+        feet_accel = torch.sum(torch.norm(self._robot.data.body_lin_acc_w[:,13:17],dim=1),dim=1)
+        # feet_accel = torch.sum(torch.square(torch.norm(self._robot.data.body_lin_acc_w[:,13:17],dim=1)),dim=1)
         # undesired contacts
         if isinstance(self.cfg, AnymalDClimbUpEnvPosCfg):
             net_contact_forces = self._contact_sensor.data.net_forces_w_history
@@ -223,29 +219,48 @@ class AnymalDEnvPos(DirectRLEnv):
         velocity = torch.norm(self._robot.data.root_lin_vel_b[:, :3], dim=1)
         pos_error = torch.norm(self._commands[:, :3] - self._robot.data.root_pos_w[:, :3], dim=1)
         # Condition: low velocity AND high position error, per robot
-        # stall_mask = (velocity < 0.2) & (pos_error > 0.5)
-        stall_mask = (velocity < 0.2)
+        stall_mask = (velocity < 0.2) & (pos_error > 0.5)
+        # stall_mask = (velocity < 0.2)
         # Assign -1 reward where the condition is met
         reward_stall = torch.where(stall_mask, torch.full_like(velocity, 1.0), torch.zeros_like(velocity))
 
+        # rewards = {
+        #     "dof_torques_l2": joint_torques * self.cfg.joint_torque_reward_scale  ,
+        #     "dof_vel_l2" : joint_velo * self.cfg.joint_velo_reward_scale * self.step_dt,
+        #     "action_rate_l2": action_rate * self.cfg.action_rate_reward_scale * self.step_dt,
+        #     "action_rate2_l2" : action_rate2 * self.cfg.action_rate2_reward_scale * self.step_dt,
+        #     "heading_command" : reward_heading  * self.cfg.heading_command_reward_scale * self.step_dt,
+        #     "base_accel" : base_accel * self.cfg.base_accel_reward_scale * self.step_dt,
+        #     "feet_accel" : feet_accel * self.cfg.feet_accel_reward_scale * self.step_dt,
+        #     "undesired_contacts": contacts * self.cfg.undesired_contact_reward_scale * self.step_dt, ####
+        #     "task_reward" : reward_task*self.cfg.task_reward_scale * self.step_dt,
+        #     "bias_reward" : reward_bias*self.cfg.bias_reward_scale * self.step_dt,
+        #     "stall_reward" : reward_stall*self.cfg.stall_reward_scale * self.step_dt, ####
+        #     "termination" : self.cfg.terminate_reward_scale * self.reset_terminated.float(),
+        #     "feet_contact_force" : self.cfg.feet_force_reward_scale * feet_contact_force * self.step_dt,
+        #     "stumble" : self.cfg.stumble_reward_scale * stumble_penalty * self.step_dt,
+        #     "stand_target" : self.cfg.stand_target_reward_scale * stand_target * self.step_dt,
+        #     "velocity_limit" : self.cfg.velo_limit_reward_scale * joint_velo_limit * self.step_dt,
+        #     "joint_limit" : self.cfg.joint_limit_reward_scale * joint_torque_limit * self.step_dt,
+        #     }
         rewards = {
-            "dof_torques_l2": joint_torques * self.cfg.joint_torque_reward_scale * self.step_dt,
-            "dof_vel_l2" : joint_velo * self.cfg.joint_velo_reward_scale * self.step_dt,
-            "action_rate_l2": action_rate * self.cfg.action_rate_reward_scale * self.step_dt,
-            "action_rate2_l2" : action_rate2 * self.cfg.action_rate2_reward_scale * self.step_dt,
-            "heading_command" : reward_heading  * self.cfg.heading_command_reward_scale * self.step_dt,
-            "base_accel" : base_accel * self.cfg.base_accel_reward_scale * self.step_dt,
-            "feet_accel" : feet_accel * self.cfg.feet_accel_reward_scale * self.step_dt,
-            "undesired_contacts": contacts * self.cfg.undesired_contact_reward_scale * self.step_dt, ####
-            "task_reward" : reward_task*self.cfg.task_reward_scale * self.step_dt,
-            "bias_reward" : reward_bias*self.cfg.bias_reward_scale * self.step_dt,
-            "stall_reward" : reward_stall*self.cfg.stall_reward_scale * self.step_dt, ####
+            "dof_torques_l2": joint_torques * self.cfg.joint_torque_reward_scale ,
+            "dof_vel_l2" : joint_velo * self.cfg.joint_velo_reward_scale ,
+            "action_rate_l2": action_rate * self.cfg.action_rate_reward_scale ,
+            "action_rate2_l2" : action_rate2 * self.cfg.action_rate2_reward_scale ,
+            "heading_command" : reward_heading  * self.cfg.heading_command_reward_scale ,
+            "base_accel" : base_accel * self.cfg.base_accel_reward_scale,
+            "feet_accel" : feet_accel * self.cfg.feet_accel_reward_scale ,
+            "undesired_contacts": contacts * self.cfg.undesired_contact_reward_scale  , ####
+            "task_reward" : reward_task*self.cfg.task_reward_scale  ,
+            "bias_reward" : reward_bias*self.cfg.bias_reward_scale  ,
+            "stall_reward" : reward_stall*self.cfg.stall_reward_scale  , ####
             "termination" : self.cfg.terminate_reward_scale * self.reset_terminated.float(),
-            "feet_contact_force" : self.cfg.feet_force_reward_scale * feet_contact_force * self.step_dt,
-            "stumble" : self.cfg.stumble_reward_scale * stumble_penalty * self.step_dt,
-            "stand_target" : self.cfg.stand_target_reward_scale * stand_target * self.step_dt,
-            "velocity_limit" : self.cfg.velo_limit_reward_scale * joint_velo_limit * self.step_dt,
-            "joint_limit" : self.cfg.joint_limit_reward_scale * joint_torque_limit * self.step_dt,
+            "feet_contact_force" : self.cfg.feet_force_reward_scale * feet_contact_force  ,
+            "stumble" : self.cfg.stumble_reward_scale * stumble_penalty  ,
+            "stand_target" : self.cfg.stand_target_reward_scale * stand_target  ,
+            "velocity_limit" : self.cfg.velo_limit_reward_scale * joint_velo_limit  ,
+            "joint_limit" : self.cfg.joint_limit_reward_scale * joint_torque_limit  ,
             }
         reward = torch.sum(torch.stack(list(rewards.values())), dim=0)
         # Logging
@@ -279,43 +294,33 @@ class AnymalDEnvPos(DirectRLEnv):
             angle = torch.rand(1,device=self.device) * 2 * torch.pi
             radius = 1 + 4 * torch.rand(1,device=self.device)   
             # self._commands[env_ids,:3] =  self.valid_targets[self._terrain.terrain_levels[env_ids], self._terrain.terrain_types[env_ids],ids]
-            self._commands[env_ids,0] = self._terrain.env_origins[env_ids,0]
-            self._commands[env_ids,1] = self._terrain.env_origins[env_ids,1]
-            self._commands[env_ids,0] += radius * torch.cos(angle)
-            # self._commands[env_ids,0] += radius
-            self._commands[env_ids,1] += radius * torch.sin(angle)
+            self._commands[env_ids,0] = self._terrain.env_origins[env_ids,0] + radius * torch.cos(angle)
+            self._commands[env_ids,1] = self._terrain.env_origins[env_ids,1] + radius * torch.sin(angle)
             self._commands[env_ids,2] = 0.6
             default_root_state = self._robot.data.default_root_state[env_ids]
             default_root_state[:, :3] += self._terrain.env_origins[env_ids]
-            
         if  isinstance(self.cfg, AnymalDClimbUpEnvPosCfg):
-            self._commands[env_ids,0] = self._terrain.env_origins[env_ids,0]
-            self._commands[env_ids,1] = self._terrain.env_origins[env_ids,1]
             angle = torch.rand(1,device=self.device) * 2 * torch.pi
             radius = torch.tensor(4.5,device=self.device)
-            self._commands[env_ids,0] += radius * torch.cos(angle)
-            self._commands[env_ids,1] += radius * torch.sin(angle)
+            self._commands[env_ids,0] = self._terrain.env_origins[env_ids,0] + radius * torch.cos(angle)
+            self._commands[env_ids,1] = self._terrain.env_origins[env_ids,1] + radius * torch.sin(angle)
             self._commands[env_ids,2] = 0.6
             default_root_state = self._robot.data.default_root_state[env_ids]
             default_root_state[:, :3] += self._terrain.env_origins[env_ids]
         if  isinstance(self.cfg, AnymalDClimbDownEnvPosCfg):
-            self._commands[env_ids,0] = self._terrain.env_origins[env_ids,0]
-            self._commands[env_ids,1] = self._terrain.env_origins[env_ids,1]
             angle = torch.rand(1,device=self.device) * 2 * torch.pi
             radius = torch.tensor(4.5,device=self.device)
-            self._commands[env_ids,0] += radius * torch.cos(angle)
-            self._commands[env_ids,1] += radius * torch.sin(angle)
+            self._commands[env_ids,0] = self._terrain.env_origins[env_ids,0] + radius * torch.cos(angle)
+            self._commands[env_ids,1] = self._terrain.env_origins[env_ids,1] + radius * torch.sin(angle)
             self._commands[env_ids,2] = 0.6
             default_root_state = self._robot.data.default_root_state[env_ids]
             default_root_state[:, :3] += self._terrain.env_origins[env_ids]
-        self._commands[env_ids,3] = angle
+        self._commands[env_ids,3] = torch.rand(1,device=self.device) * 2 * torch.pi
+        # self._commands[env_ids,3] = angle
         self._commands[env_ids,4] = torch.tensor(self.max_episode_length,device=self.device,dtype=torch.float32)
         zeros = torch.zeros_like(self._commands[:,3],device=self.device)
-        # arrow_quat = math_utils.quat_from_euler_xyz(self._commands[:,3], self._commands[:,4], self._commands[:,5])
         arrow_quat = math_utils.quat_from_euler_xyz(zeros, zeros, self._commands[:,3])
-
         self.goal_visualizer.visualize(translations=self._commands[:,:3],orientations=arrow_quat)
-        # self.goal_visualizer.visualize(translations=self._commands[:,:3])
         # print(f"command_Assign{self._commands}")
         # print(f"command_Assign{arrow_quat}")
         ################################################################################################################

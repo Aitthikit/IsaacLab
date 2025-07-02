@@ -92,6 +92,6 @@ class AnymalDPosPPORunnerCfg(RslRlOnPolicyRunnerCfg):
         desired_kl=0.01,
         max_grad_norm=1.0,
     )
-    resume = True
-    load_checkpoint = "/home/robotics01/Documents/Big/IsaacLab/logs/rsl_rl/anymal_d_pos_endtoend_direct/Walkwithoutheading/model_1999.pt"
+    resume = False
+    load_checkpoint = "/home/robotics01/Documents/Big/IsaacLab/logs/rsl_rl/anymal_d_pos_endtoend_direct/2025-07-01_11-35-18/model_1999.pt"
 

@@ -211,37 +211,37 @@ class AnymalDFlatEnvPosCfg(DirectRLEnvCfg):
             restitution=0.0,
         ),
     )
-    # terrain = TerrainImporterCfg(
-    #     prim_path="/World/ground",
-    #     terrain_type="generator",
-    #     terrain_generator=MULTI_TERRAINS_PLANE_CFG,
-    #     max_init_terrain_level=9,
-    #     collision_group=-1,
-    #     physics_material=sim_utils.RigidBodyMaterialCfg(
-    #         friction_combine_mode="multiply",
-    #         restitution_combine_mode="multiply",
-    #         static_friction=1.0,
-    #         dynamic_friction=1.0,
-    #     ),
-    #     visual_material=sim_utils.MdlFileCfg(
-    #         mdl_path="{NVIDIA_NUCLEUS_DIR}/Materials/Base/Architecture/Shingles_01.mdl",
-    #         project_uvw=True,
-    #     ),
-    #     debug_vis=False,
-    # )
     terrain = TerrainImporterCfg(
         prim_path="/World/ground",
-        terrain_type="plane",
+        terrain_type="generator",
+        terrain_generator=MULTI_TERRAINS_PLANE_CFG,
+        max_init_terrain_level=9,
         collision_group=-1,
         physics_material=sim_utils.RigidBodyMaterialCfg(
             friction_combine_mode="multiply",
             restitution_combine_mode="multiply",
             static_friction=1.0,
             dynamic_friction=1.0,
-            restitution=0.0,
         ),
-        debug_vis=True,
+        visual_material=sim_utils.MdlFileCfg(
+            mdl_path="{NVIDIA_NUCLEUS_DIR}/Materials/Base/Architecture/Shingles_01.mdl",
+            project_uvw=True,
+        ),
+        debug_vis=False,
     )
+    # terrain = TerrainImporterCfg(
+    #     prim_path="/World/ground",
+    #     terrain_type="plane",
+    #     collision_group=-1,
+    #     physics_material=sim_utils.RigidBodyMaterialCfg(
+    #         friction_combine_mode="multiply",
+    #         restitution_combine_mode="multiply",
+    #         static_friction=1.0,
+    #         dynamic_friction=1.0,
+    #         restitution=0.0,
+    #     ),
+    #     debug_vis=True,
+    # )
 
 
     # we add a height scanner for perceptive locomotion
@@ -315,12 +315,12 @@ class AnymalDFlatEnvPosCfg(DirectRLEnvCfg):
     task_reward_scale = 10.0
     bias_reward_scale = 1.0
     stall_reward_scale = -1.0
-    feet_accel_reward_scale = -0.0002
+    feet_accel_reward_scale = -0.002
     heading_reward_scale = 0.0
     heading_command_reward_scale = 5.0
     terminate_reward_scale = -200
     feet_force_reward_scale = -0.002
-    base_accel_reward_scale = -0.0001
+    base_accel_reward_scale = -0.001
     stumble_reward_scale = -1.0
     stand_target_reward_scale = 0.5
     velo_limit_reward_scale = -1
