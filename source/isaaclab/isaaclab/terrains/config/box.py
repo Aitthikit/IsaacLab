@@ -76,64 +76,64 @@ MULTI_TERRAINS_PLANE_CFG = TerrainGeneratorCfg(
                                                 )
         },
         ),
-        # "pyramid_stairs": terrain_gen.MeshPyramidStairsTerrainCfg(
-        #     proportion=0.1,
-        #     step_height_range=(0.05, 0.23),
-        #     step_width=0.3,
-        #     platform_width=3.0,
-        #     border_width=1.0,
-        #     holes=False,
-        #     flat_patch_sampling = {
-        #         "target" : FlatPatchSamplingCfg(num_patches=10000,
-        #                                         patch_radius=0.5,
-        #                                         max_height_diff=1.00,
-        #                                         x_range =(-8.00,8.00),
-        #                                         y_range =(-8.00,8.00),
-        #                                         z_range =(-1.2,-0.1)
-        #                                         )
-        # },
-        # ),
-        # "pyramid_stairs_inv": terrain_gen.MeshInvertedPyramidStairsTerrainCfg(
-        #     proportion=0.1,
-        #     step_height_range=(0.05, 0.2),
-        #     step_width=0.3,
-        #     platform_width=3.0,
-        #     border_width=1.0,
-        #     holes=False,
-        #     flat_patch_sampling = {
-        #         "target" : FlatPatchSamplingCfg(num_patches=10000,
-        #                                         patch_radius=0.5,
-        #                                         max_height_diff=1.00,
-        #                                         x_range =(-8.00,8.00),
-        #                                         y_range =(-8.00,8.00),
-        #                                         z_range =(0.1,1.2)
-        #                                         )
-        # },
-        # ),
-        # "hf_pyramid_slope": terrain_gen.HfPyramidSlopedTerrainCfg(
-        #     proportion=0.1, slope_range=(0.1, 0.25), platform_width=2.0, border_width=0.25,
-        #     flat_patch_sampling = {
-        #       "target" : FlatPatchSamplingCfg(num_patches=10000,
-        #                                         patch_radius=0.5,
-        #                                         max_height_diff=1.00,
-        #                                         x_range =(-8.00,8.00),
-        #                                         y_range =(-8.00,8.00),
-        #                                         z_range =(-1.2,-0.1)
-        #                                         )
-        # },
-        # ),
-        # "hf_pyramid_slope_inv": terrain_gen.HfInvertedPyramidSlopedTerrainCfg(
-        #     proportion=0.1, slope_range=(0.1, 0.25), platform_width=2.0, border_width=0.25,
-        #     flat_patch_sampling = {
-        #         "target" : FlatPatchSamplingCfg(num_patches=10000,
-        #                                         patch_radius=0.5,
-        #                                         max_height_diff=1.00,
-        #                                         x_range =(-8.00,8.00),
-        #                                         y_range =(-8.00,8.00),
-        #                                         z_range =(0.1,1.2)
-        #                                         )
-        # },
-        # ),       
+        "pyramid_stairs": terrain_gen.MeshPyramidStairsTerrainCfg(
+            proportion=0.1,
+            step_height_range=(0.05, 0.23),
+            step_width=0.3,
+            platform_width=3.0,
+            border_width=1.0,
+            holes=False,
+            flat_patch_sampling = {
+                "target" : FlatPatchSamplingCfg(num_patches=10000,
+                                                patch_radius=0.5,
+                                                max_height_diff=1.00,
+                                                x_range =(-8.00,8.00),
+                                                y_range =(-8.00,8.00),
+                                                z_range =(-5.2,-0.1)
+                                                )
+        },
+        ),
+        "pyramid_stairs_inv": terrain_gen.MeshInvertedPyramidStairsTerrainCfg(
+            proportion=0.1,
+            step_height_range=(0.05, 0.2),
+            step_width=0.3,
+            platform_width=3.0,
+            border_width=1.0,
+            holes=False,
+            flat_patch_sampling = {
+                "target" : FlatPatchSamplingCfg(num_patches=10000,
+                                                patch_radius=0.5,
+                                                max_height_diff=1.00,
+                                                x_range =(-8.00,8.00),
+                                                y_range =(-8.00,8.00),
+                                                z_range =(0.1,5.2)
+                                                )
+        },
+        ),
+        "hf_pyramid_slope": terrain_gen.HfPyramidSlopedTerrainCfg(
+            proportion=0.1, slope_range=(0.1, 0.25), platform_width=2.0, border_width=0.25,
+            flat_patch_sampling = {
+              "target" : FlatPatchSamplingCfg(num_patches=10000,
+                                                patch_radius=0.5,
+                                                max_height_diff=1.00,
+                                                x_range =(-8.00,8.00),
+                                                y_range =(-8.00,8.00),
+                                                z_range =(-5.2,-0.1)
+                                                )
+        },
+        ),
+        "hf_pyramid_slope_inv": terrain_gen.HfInvertedPyramidSlopedTerrainCfg(
+            proportion=0.1, slope_range=(0.1, 0.25), platform_width=2.0, border_width=0.25,
+            flat_patch_sampling = {
+                "target" : FlatPatchSamplingCfg(num_patches=10000,
+                                                patch_radius=0.5,
+                                                max_height_diff=1.00,
+                                                x_range =(-8.00,8.00),
+                                                y_range =(-8.00,8.00),
+                                                z_range =(0.1,5.2)
+                                                )
+        },
+        ),       
     },
 )
 

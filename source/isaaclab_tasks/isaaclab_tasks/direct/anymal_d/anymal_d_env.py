@@ -94,7 +94,7 @@ class AnymalDEnvPos(DirectRLEnv):
         light_cfg = sim_utils.DomeLightCfg(intensity=2000.0, color=(0.75, 0.75, 0.75))
         light_cfg.func("/World/Light", light_cfg)
         # get target from terrain sampling
-        # self.valid_targets: torch.Tensor = self._terrain.flat_patches["target"]
+        self.valid_targets: torch.Tensor = self._terrain.flat_patches["target"]
 
         
     def _pre_physics_step(self, actions: torch.Tensor):
@@ -282,21 +282,22 @@ class AnymalDEnvPos(DirectRLEnv):
         super()._reset_idx(env_ids)
         if len(env_ids) == self.num_envs:
             # Spread out the resets to avoid spikes in training when many environments reset at a similar time
-            # self.episode_length_buf[:] = torch.randint_like(self.episode_length_buf, high=int(self.max_episode_length))
-            self.episode_length_buf[:] = torch.zeros_like(self.episode_length_buf)
+            self.episode_length_buf[:] = torch.randint_like(self.episode_length_buf, high=int(self.max_episode_length))
+            # self.episode_length_buf[:] = torch.zeros_like(self.episode_length_buf)
             self.episode_temp = torch.clone(self.episode_length_buf)
         self._actions[env_ids] = 0.0
         self._previous_actions[env_ids] = 0.0
         ################################################################################################################
         # Sample new commands
         if  isinstance(self.cfg, AnymalDFlatEnvPosCfg):
-            # ids = torch.randint(0, self.valid_targets.shape[2], size=(len(env_ids),), device=self.device)
-            angle = torch.rand(1,device=self.device) * 2 * torch.pi
-            radius = 1 + 4 * torch.rand(1,device=self.device)   
-            # self._commands[env_ids,:3] =  self.valid_targets[self._terrain.terrain_levels[env_ids], self._terrain.terrain_types[env_ids],ids]
-            self._commands[env_ids,0] = self._terrain.env_origins[env_ids,0] + radius * torch.cos(angle)
-            self._commands[env_ids,1] = self._terrain.env_origins[env_ids,1] + radius * torch.sin(angle)
-            self._commands[env_ids,2] = 0.6
+            ids = torch.randint(0, self.valid_targets.shape[2], size=(len(env_ids),), device=self.device)
+            # angle = torch.rand(1,device=self.device) * 2 * torch.pi
+            # radius = 1 + 4 * torch.rand(1,device=self.device)   
+            self._commands[env_ids,:3] =  self.valid_targets[self._terrain.terrain_levels[env_ids], self._terrain.terrain_types[env_ids],ids]
+            angle = torch.atan2(self._commands[env_ids, 1] - self._terrain.env_origins[env_ids,1], self._commands[env_ids, 0] - self._terrain.env_origins[env_ids,0])
+            # self._commands[env_ids,0] = self._terrain.env_origins[env_ids,0] + radius * torch.cos(angle)
+            # self._commands[env_ids,1] = self._terrain.env_origins[env_ids,1] + radius * torch.sin(angle)
+            self._commands[env_ids,2] += 0.6
             default_root_state = self._robot.data.default_root_state[env_ids]
             default_root_state[:, :3] += self._terrain.env_origins[env_ids]
         if  isinstance(self.cfg, AnymalDClimbUpEnvPosCfg):
@@ -315,8 +316,8 @@ class AnymalDEnvPos(DirectRLEnv):
             self._commands[env_ids,2] = 0.6
             default_root_state = self._robot.data.default_root_state[env_ids]
             default_root_state[:, :3] += self._terrain.env_origins[env_ids]
-        self._commands[env_ids,3] = torch.rand(1,device=self.device) * 2 * torch.pi
-        # self._commands[env_ids,3] = angle
+        # self._commands[env_ids,3] = torch.rand(1,device=self.device) * 2 * torch.pi
+        self._commands[env_ids,3] = angle
         self._commands[env_ids,4] = torch.tensor(self.max_episode_length,device=self.device,dtype=torch.float32)
         zeros = torch.zeros_like(self._commands[:,3],device=self.device)
         arrow_quat = math_utils.quat_from_euler_xyz(zeros, zeros, self._commands[:,3])

@@ -147,7 +147,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # save resume path before creating a new log_dir
     if agent_cfg.resume or agent_cfg.algorithm.class_name == "Distillation":
         # resume_path = get_checkpoint_path(log_root_path, agent_cfg.load_run, agent_cfg.load_checkpoint)
-        resume_path = "/home/robotics01/Documents/Big/IsaacLab/logs/rsl_rl/anymal_d_pos_endtoend_direct/2025-07-01_11-35-18/model_1999.pt"
+        resume_path = "/home/robotics01/Documents/Big/IsaacLab/logs/rsl_rl/anymal_d_pos_endtoend_direct/2025-07-02_11-13-07/model_1999.pt"
 
 
     # wrap for video recording

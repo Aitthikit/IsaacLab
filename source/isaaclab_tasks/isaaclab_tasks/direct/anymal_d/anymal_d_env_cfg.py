@@ -306,25 +306,26 @@ class AnymalDFlatEnvPosCfg(DirectRLEnvCfg):
     # velo_limit_reward_scale = -1
     # joint_limit_reward_scale = -0.2
 
-    joint_torque_reward_scale = -0.00001
-    joint_velo_reward_scale =  -0.001
-    action_rate_reward_scale = -0.01
-    action_rate2_reward_scale = 0.0
-    undesired_contact_reward_scale = -1.0
-    flat_orientation_reward_scale = 0.0
     task_reward_scale = 10.0
-    bias_reward_scale = 1.0
-    stall_reward_scale = -1.0
-    feet_accel_reward_scale = -0.002
-    heading_reward_scale = 0.0
     heading_command_reward_scale = 5.0
-    terminate_reward_scale = -200
-    feet_force_reward_scale = -0.002
-    base_accel_reward_scale = -0.001
-    stumble_reward_scale = -1.0
-    stand_target_reward_scale = 0.5
+    joint_velo_reward_scale =  -0.001
+    joint_torque_reward_scale = -0.00001
     velo_limit_reward_scale = -1
     joint_limit_reward_scale = -0.2
+    base_accel_reward_scale = -0.001
+    feet_accel_reward_scale = -0.002
+    action_rate_reward_scale = -0.01
+    feet_force_reward_scale = -0.00001
+    stall_reward_scale = -1.0
+    bias_reward_scale = 1.0
+    stand_target_reward_scale = 0.5
+    undesired_contact_reward_scale = -1.0
+    stumble_reward_scale = -1.0
+    terminate_reward_scale = -200
+    heading_reward_scale = 0.0
+    action_rate2_reward_scale = 0.0
+    flat_orientation_reward_scale = 0.0
+    
 
     # joint_torque_reward_scale = -1.0e-05
     # # joint_accel_reward_scale = -2.5e-07
