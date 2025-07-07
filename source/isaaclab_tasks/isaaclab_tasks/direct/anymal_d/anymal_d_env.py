@@ -168,9 +168,12 @@ class AnymalDEnvPos(DirectRLEnv):
             net_contact_forces = self._contact_sensor.data.net_forces_w_history
             is_contact = torch.max(torch.norm(net_contact_forces[:, :, self._undesired_contact_body_ids], dim=-1), dim=1)[0] > 1.0
             is_contact2 = torch.max(torch.norm(net_contact_forces[:, :, self._shank_ids], dim=-1), dim=1)[0] > 1.0
+            is_contact3 = torch.max(torch.norm(net_contact_forces[:, :, self._base_id], dim=-1), dim=1)[0] > 1.0
             contacts = torch.sum(is_contact, dim=1)
             contacts2 = torch.sum(is_contact2, dim=1)
-            contacts += contacts2 
+            contacts3 = torch.sum(is_contact3, dim=1)
+            contacts += contacts2
+            contacts += contacts3 
         # foot force penalty
         foot_force_norms = torch.norm(self._contact_sensor.data.net_forces_w[:, self._feet_ids],dim=1)
         feet_contact_force = torch.sum(torch.square(torch.maximum(foot_force_norms-700,torch.zeros_like(foot_force_norms))),dim=1)
@@ -271,8 +274,8 @@ class AnymalDEnvPos(DirectRLEnv):
     def _get_dones(self) -> tuple[torch.Tensor, torch.Tensor]:
         time_out = self.episode_length_buf >= self.max_episode_length - 1
         net_contact_forces = self._contact_sensor.data.net_forces_w_history
-        died = (torch.any(torch.max(torch.norm(net_contact_forces[:, :, self._base_id], dim=-1), dim=1)[0] > 1.0, dim=1))
-        died |= torch.any(torch.max(torch.norm(net_contact_forces[:, :, self._feet_ids], dim=-1), dim=1)[0] > 1500.0, dim=1)
+        # died = (torch.any(torch.max(torch.norm(net_contact_forces[:, :, self._base_id], dim=-1), dim=1)[0] > 1.0, dim=1))
+        died = torch.any(torch.max(torch.norm(net_contact_forces[:, :, self._feet_ids], dim=-1), dim=1)[0] > 1500.0, dim=1)
         return died, time_out
 
     def _reset_idx(self, env_ids: torch.Tensor | None):
