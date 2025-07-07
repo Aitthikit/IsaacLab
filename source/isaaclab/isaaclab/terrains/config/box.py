@@ -234,7 +234,7 @@ MULTI_TERRAINS_PIT_CFG = TerrainGeneratorCfg(
         "pits": terrain_gen.MeshPitTerrainCfg(
             proportion=0.8,
             pit_depth_range=(0.1,1.0),
-            platform_width = 1.5,
+            platform_width = 2.5,
             flat_patch_sampling = {
                 "target" : FlatPatchSamplingCfg(num_patches=10000,
                                                 patch_radius=0.5,
