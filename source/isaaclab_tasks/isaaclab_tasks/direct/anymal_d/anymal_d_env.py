@@ -12,7 +12,7 @@ import isaaclab.utils.math as math_utils
 import isaaclab.sim as sim_utils
 from isaaclab.assets import Articulation
 from isaaclab.envs import DirectRLEnv
-from isaaclab.sensors import ContactSensor , RayCaster
+from isaaclab.sensors import ContactSensor , RayCaster , Imu
 from isaaclab.markers.config import GREEN_ARROW_X_MARKER_CFG
 from isaaclab.markers import VisualizationMarkers
 
@@ -85,6 +85,10 @@ class AnymalDEnvPos(DirectRLEnv):
         # we add a height scanner for perceptive locomotion
         self._height_scanner = RayCaster(self.cfg.height_scanner)
         self.scene.sensors["height_scanner"] = self._height_scanner
+
+        self._imu_sensor = Imu(self.cfg.imu_sensor)
+        self.scene.sensors["imu_sensor"] = self._imu_sensor
+        
         self.cfg.terrain.num_envs = self.scene.cfg.num_envs
         self.cfg.terrain.env_spacing = self.scene.cfg.env_spacing
         self._terrain = self.cfg.terrain.class_type(self.cfg.terrain)

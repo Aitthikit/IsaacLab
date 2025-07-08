@@ -10,7 +10,7 @@ from isaaclab.envs import DirectRLEnvCfg
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.scene import InteractiveSceneCfg
-from isaaclab.sensors import ContactSensorCfg, RayCasterCfg, patterns
+from isaaclab.sensors import ContactSensorCfg, RayCasterCfg, patterns, ImuCfg
 from isaaclab.sim import SimulationCfg
 from isaaclab.terrains import TerrainImporterCfg , TerrainGeneratorCfg
 from isaaclab.utils import configclass
@@ -147,6 +147,11 @@ class AnymalDRoughEnvCfg(AnymalDFlatEnvCfg):
         mesh_prim_paths=["/World/ground"],
     )
 
+    imu_sensor = ImuCfg(
+        prim_path="/World/envs/env_.*/Robot/base",
+        update_period = 0.1,
+    )
+
     # reward scales (override from flat config)
     flat_orientation_reward_scale = 0.0
 
@@ -252,6 +257,11 @@ class AnymalDFlatEnvPosCfg(DirectRLEnvCfg):
         pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[2.0, 1.0]),
         debug_vis=False,
         mesh_prim_paths=["/World/ground"],
+    )
+
+    imu_sensor = ImuCfg(
+        prim_path="/World/envs/env_.*/Robot/base",
+        update_period = 0.1,
     )
 
     # scene
