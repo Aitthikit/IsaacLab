@@ -64,7 +64,8 @@ import numpy as np
 import os
 import random
 import torch
-
+import matplotlib.pyplot as plt
+import cv2
 import isaacsim.core.utils.prims as prim_utils
 import omni.replicator.core as rep
 
@@ -103,6 +104,7 @@ def define_sensor() -> Camera:
         spawn=sim_utils.PinholeCameraCfg(
             focal_length=24.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
         ),
+        
     )
     # Create camera
     camera = Camera(cfg=camera_cfg)
@@ -200,7 +202,7 @@ def run_simulator(sim: sim_utils.SimulationContext, scene_entities: dict):
         cfg = RAY_CASTER_MARKER_CFG.replace(prim_path="/Visuals/CameraPointCloud")
         cfg.markers["hit"].radius = 0.002
         pc_markers = VisualizationMarkers(cfg)
-
+    i = 0
     # Simulate physics
     while simulation_app.is_running():
         # Step simulation
@@ -223,7 +225,18 @@ def run_simulator(sim: sim_utils.SimulationContext, scene_entities: dict):
         if "instance_id_segmentation_fast" in camera.data.output.keys():
             print("Received shape of instance id segm.: ", camera.data.output["instance_id_segmentation_fast"].shape)
         print("-------------------------------")
-
+        depth_image = camera.data.output["rgb"][0, :, :, 0].cpu().numpy()  # shape: (480, 640)
+        if i == 0:
+            plt.ion()  # interactive mode
+            fig, ax = plt.subplots()
+            im = ax.imshow(depth_image)  # fix vmin/vmax for consistent colors
+            plt.colorbar(im, ax=ax, label='Depth (m)')
+            plt.title("Real-Time Depth Image")
+            i = 1
+        else:
+            im.set_data(depth_image)
+            fig.canvas.draw()
+            fig.canvas.flush_events()
         # Extract camera data
         if args_cli.save:
             # Save images from camera at camera_index

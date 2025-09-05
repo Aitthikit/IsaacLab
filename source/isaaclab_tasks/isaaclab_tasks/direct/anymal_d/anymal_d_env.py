@@ -7,12 +7,12 @@ from __future__ import annotations
 
 import gymnasium as gym
 import torch
-
+import matplotlib.pyplot as plt
 import isaaclab.utils.math as math_utils
 import isaaclab.sim as sim_utils
 from isaaclab.assets import Articulation
 from isaaclab.envs import DirectRLEnv
-from isaaclab.sensors import ContactSensor , RayCaster , Imu
+from isaaclab.sensors import ContactSensor , RayCaster , Imu , Camera, RayCasterCamera
 from isaaclab.markers.config import GREEN_ARROW_X_MARKER_CFG
 from isaaclab.markers import VisualizationMarkers
 
@@ -88,7 +88,16 @@ class AnymalDEnvPos(DirectRLEnv):
 
         self._imu_sensor = Imu(self.cfg.imu_sensor)
         self.scene.sensors["imu_sensor"] = self._imu_sensor
-        
+
+        self._camera = Camera(self.cfg.camera_cfg)
+        self.scene.sensors["camera"] = self._camera
+
+        self._raycamera = RayCasterCamera(self.cfg.raycamera_cfg)
+        self.scene.sensors["raycamera"] = self._raycamera
+        # self._camera.set_world_poses_from_view(torch.tensor([[2.5, 2.5, 2.5], [-2.5, -2.5, 2.5]], device=self.device)
+        #                                        , torch.tensor([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]], device=self.device))
+
+        self.i = 0
         self.cfg.terrain.num_envs = self.scene.cfg.num_envs
         self.cfg.terrain.env_spacing = self.scene.cfg.env_spacing
         self._terrain = self.cfg.terrain.class_type(self.cfg.terrain)
@@ -115,6 +124,9 @@ class AnymalDEnvPos(DirectRLEnv):
         height_data = (
             self._height_scanner.data.pos_w[:, 2].unsqueeze(1) - self._height_scanner.data.ray_hits_w[..., 2] - 0.5
         ).clip(-1.0, 1.0)
+
+        # scan_data = self._raycamera.data.output["distance_to_image_plane"]
+        # self._raycamera.data
         # prepare command for obs
         commandobs = torch.clone(self._commands)
         commandobs[:, :3] = self._commands[:, :3]-self._robot.data.root_pos_w[:, :3]
@@ -143,6 +155,21 @@ class AnymalDEnvPos(DirectRLEnv):
         ################################################################################################################
     def _get_rewards(self) -> torch.Tensor:
         ################################################################################################################
+        # print(self._camera.data.output["distance_to_image_plane"].shape)
+        depth_image = self._camera.data.output["distance_to_image_plane"][1, :, :, 0].cpu().numpy()  # shape: (480, 640)
+        # depth_image = self._camera.data.output["rgb"][1, :, :, 0].cpu().numpy()
+        if self.i == 0:
+            plt.ion()  # interactive mode
+            self.fig, self.ax = plt.subplots()
+            self.im = self.ax.imshow(depth_image)
+            # self.im = self.ax.imshow(depth_image,cmap='plasma', vmin=0, vmax=3)  # fix vmin/vmax for consistent colors
+            plt.colorbar(self.im, ax=self.ax, label='Depth (m)')
+            plt.title("Real-Time Depth Image")
+            self.i = 1
+        else:
+            self.im.set_data(depth_image)
+            self.fig.canvas.draw()
+            self.fig.canvas.flush_events()
         # joint torques
         joint_torques = torch.sum(torch.square(self._robot.data.applied_torque), dim=1)
         # joint acceleration

@@ -53,6 +53,11 @@ class MySceneCfg(InteractiveSceneCfg):
             static_friction=1.0,
             dynamic_friction=1.0,
         ),
+        # sim_utils.DeformableBodyMaterialCfg(
+        #     density= 0.1,
+        #     damping_scale = 0.0,
+        #     dynamic_friction = 0.25,
+        # )
         visual_material=sim_utils.MdlFileCfg(
             mdl_path=f"{ISAACLAB_NUCLEUS_DIR}/Materials/TilesMarbleSpiderWhiteBrickBondHoned/TilesMarbleSpiderWhiteBrickBondHoned.mdl",
             project_uvw=True,

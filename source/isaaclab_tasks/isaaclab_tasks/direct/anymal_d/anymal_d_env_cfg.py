@@ -10,7 +10,7 @@ from isaaclab.envs import DirectRLEnvCfg
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.scene import InteractiveSceneCfg
-from isaaclab.sensors import ContactSensorCfg, RayCasterCfg, patterns, ImuCfg
+from isaaclab.sensors import ContactSensorCfg, RayCasterCfg, patterns, ImuCfg , CameraCfg,RayCasterCameraCfg
 from isaaclab.sim import SimulationCfg
 from isaaclab.terrains import TerrainImporterCfg , TerrainGeneratorCfg
 from isaaclab.utils import configclass
@@ -184,7 +184,14 @@ class AnymalDClimbEnvCfg(AnymalDFlatEnvCfg):
         prim_path="/World/envs/env_.*/Robot/base",
         offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 20.0)),
         attach_yaw_only=True,
-        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[1.6, 1.0]),
+        # pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[1.6, 1.0]),
+        pattern_cfg=patterns.PinholeCameraPatternCfg.from_intrinsic_matrix(
+            intrinsic_matrix= [525.0, 0.0, 319.5,
+                                0.0, 525.0, 239.5,
+                                0.0, 0.0, 1.0],
+            width=640,
+            height=480,
+              ),
         debug_vis=False,
         mesh_prim_paths=["/World/ground"],
     )
@@ -263,6 +270,54 @@ class AnymalDFlatEnvPosCfg(DirectRLEnvCfg):
         prim_path="/World/envs/env_.*/Robot/base",
         update_period = 0.1,
     )
+
+    camera_cfg = CameraCfg(
+        prim_path="/World/envs/env_.*/Robot/base/CameraSensor",
+        update_period=0,
+        height=480,
+        width=640,
+        data_types=[
+            "rgb",
+            "distance_to_image_plane",
+            "normals",
+            "semantic_segmentation",
+            "instance_segmentation_fast",
+            "instance_id_segmentation_fast",
+        ],
+        colorize_semantic_segmentation=True,
+        colorize_instance_id_segmentation=True,
+        colorize_instance_segmentation=True,
+        spawn=sim_utils.PinholeCameraCfg(
+            focal_length=24.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
+        ),
+        offset=CameraCfg.OffsetCfg(pos=(0.2, 0.0, 0.5),rot=(0.354,-0.612,0.612,-0.354)) 
+    )
+
+    raycamera_cfg = RayCasterCameraCfg(
+        prim_path="/World/envs/env_.*/Robot/body/CameraSensor",
+        mesh_prim_paths=["/World/ground"],
+        update_period=0.1,
+        offset=RayCasterCameraCfg.OffsetCfg(pos=(0.0, 0.0, 0.0), rot=(1.0, 0.0, 0.0, 0.0)),
+        data_types=["distance_to_image_plane", "normals", "distance_to_camera"],
+        debug_vis=True,
+        depth_clipping_behavior= "zero",
+        pattern_cfg=patterns.PinholeCameraPatternCfg(
+            focal_length=24.0,
+            horizontal_aperture=20.955,
+            height=48,
+            width=64,
+        ),
+        # pattern_cfg=patterns.PinholeCameraPatternCfg(
+        #     focal_length=1.93,
+        #     horizontal_aperture=4.85,
+        #     height=720,
+        #     width=1280,
+        # ),
+    )
+    # # Create camera
+    # camera = Camera(cfg=camera_cfg)   
+
+    # return camera
 
     # scene
     scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=4096, env_spacing=4.0, replicate_physics=True)

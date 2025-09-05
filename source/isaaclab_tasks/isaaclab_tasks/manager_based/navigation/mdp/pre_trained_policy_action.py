@@ -43,7 +43,6 @@ class PreTrainedPolicyAction(ActionTerm):
             raise FileNotFoundError(f"Policy file '{cfg.policy_path}' does not exist.")
         file_bytes = read_file(cfg.policy_path)
         self.policy = torch.jit.load(file_bytes).to(env.device).eval()
-
         self._raw_actions = torch.zeros(self.num_envs, self.action_dim, device=self.device)
 
         # prepare low level actions

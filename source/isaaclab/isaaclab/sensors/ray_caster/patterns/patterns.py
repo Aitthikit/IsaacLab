@@ -100,6 +100,7 @@ def pinhole_camera_pattern(
     # for camera, we always ray-cast from the sensor's origin
     ray_starts = torch.zeros_like(ray_directions, device=device)
 
+
     return ray_starts, ray_directions
 
 

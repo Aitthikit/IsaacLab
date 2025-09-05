@@ -41,6 +41,43 @@ class RslRlPpoActorCriticCfg:
     activation: str = MISSING
     """The activation function for the actor and critic networks."""
 
+@configclass
+class RslRlPpoQuantileCfg:
+    """Configuration for the PPO actor-critic networks."""
+
+    class_name: str = "Quantile_NN"
+    """The policy class name. Default is ActorCritic."""
+
+    init_noise_std: float = MISSING
+    """The initial noise standard deviation for the policy."""
+
+    noise_std_type: Literal["scalar", "log"] = "scalar"
+    """The type of noise standard deviation for the policy. Default is scalar."""
+
+    actor_hidden_dims: list[int] = MISSING
+    """The hidden dimensions of the actor network."""
+
+    critic_hidden_dims: list[int] = MISSING
+    """The hidden dimensions of the critic network."""
+
+    activation: str = MISSING
+    """The activation function for the actor and critic networks."""
+
+    rnn_type: str = MISSING
+    """The type of RNN to use. Either "lstm" or "gru"."""
+
+    rnn_hidden_dim: int = MISSING
+    """The dimension of the RNN layers."""
+
+    rnn_num_layers: int = MISSING
+    """The number of RNN layers."""
+
+    measure_kwargs: dict = {"beta": 0.1}
+
+    quantile_count: int = 200
+
+    encoder_obs: bool = False
+
 
 @configclass
 class RslRlPpoActorCriticRecurrentCfg(RslRlPpoActorCriticCfg):
@@ -122,6 +159,28 @@ class RslRlPpoAlgorithmCfg:
     in which case RND is not used.
     """
 
+    
+@configclass
+class RslRlDppoAlgorithmCfg(RslRlPpoAlgorithmCfg):
+
+    distributional_loss_type: str = "energy"
+
+#########################
+# Encoder configurations #
+#########################
+
+@configclass
+class RslRlEncoderCfg:
+    """Configuration for the encoder network."""
+
+    class_name: str = "Encoder"
+    """The encoder class name. Default is Encoder."""
+
+    hidden_dims: list[int] = MISSING
+    """The hidden dimensions of the encoder network."""
+
+    output_dim: int = MISSING
+    """The output dimension of the encoder network."""
 
 #########################
 # Runner configurations #

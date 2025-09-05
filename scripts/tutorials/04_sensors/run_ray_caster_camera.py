@@ -54,7 +54,7 @@ def define_sensor() -> RayCasterCamera:
     # In contras to the USD camera, we associate the sensor to the prims at these locations.
     # This means that parent prim of the sensor is the prim at this location.
     prim_utils.create_prim("/World/Origin_00/CameraSensor", "Xform")
-    prim_utils.create_prim("/World/Origin_01/CameraSensor", "Xform")
+    # prim_utils.create_prim("/World/Origin_01/CameraSensor", "Xform")
 
     # Setup camera sensor
     camera_cfg = RayCasterCameraCfg(
@@ -63,13 +63,20 @@ def define_sensor() -> RayCasterCamera:
         update_period=0.1,
         offset=RayCasterCameraCfg.OffsetCfg(pos=(0.0, 0.0, 0.0), rot=(1.0, 0.0, 0.0, 0.0)),
         data_types=["distance_to_image_plane", "normals", "distance_to_camera"],
-        debug_vis=True,
+        debug_vis=False,
+        depth_clipping_behavior= "zero",
         pattern_cfg=patterns.PinholeCameraPatternCfg(
             focal_length=24.0,
             horizontal_aperture=20.955,
-            height=480,
-            width=640,
+            height=48,
+            width=64,
         ),
+        # pattern_cfg=patterns.PinholeCameraPatternCfg(
+        #     focal_length=1.93,
+        #     horizontal_aperture=4.85,
+        #     height=720,
+        #     width=1280,
+        # ),
     )
     # Create camera
     camera = RayCasterCamera(cfg=camera_cfg)
@@ -104,13 +111,13 @@ def run_simulator(sim: sim_utils.SimulationContext, scene_entities: dict):
 
     # Set pose: There are two ways to set the pose of the camera.
     # -- Option-1: Set pose using view
-    eyes = torch.tensor([[2.5, 2.5, 2.5], [-2.5, -2.5, 2.5]], device=sim.device)
-    targets = torch.tensor([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]], device=sim.device)
+    eyes = torch.tensor([[2.5, 2.5, 2.5]], device=sim.device)
+    targets = torch.tensor([[0.0, 0.0, 0.0]], device=sim.device)
     camera.set_world_poses_from_view(eyes, targets)
     # -- Option-2: Set pose using ROS
     # position = torch.tensor([[2.5, 2.5, 2.5]], device=sim.device)
     # orientation = torch.tensor([[-0.17591989, 0.33985114, 0.82047325, -0.42470819]], device=sim.device)
-    # camera.set_world_poses(position, orientation, indices=[0], convention="ros")
+    # camera.set_world_poses(position, orientation, convention="ros")
 
     # Simulate physics
     while simulation_app.is_running():
@@ -123,6 +130,7 @@ def run_simulator(sim: sim_utils.SimulationContext, scene_entities: dict):
         print(camera)
         print("Received shape of depth image: ", camera.data.output["distance_to_image_plane"].shape)
         print("-------------------------------")
+        print(camera.data.output)
 
         # Extract camera data
         if args_cli.save:

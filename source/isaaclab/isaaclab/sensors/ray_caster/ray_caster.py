@@ -200,16 +200,24 @@ class RayCaster(SensorBase):
 
     def _initialize_rays_impl(self):
         # compute ray stars and directions
-        self.ray_starts, self.ray_directions = self.cfg.pattern_cfg.func(self.cfg.pattern_cfg, self._device)
+        # instrinsic = torch.tensor([[525.0,  0.0, 319.5],[0.0, 525.0,  239.5],[0.0, 0.0, 1.0]], dtype=torch.float32,device="cuda").unsqueeze(0).repeat(self._view.count, 1, 1)
+        # print(instrinsic.shape)
+        # self.ray_starts, self.ray_directions = self.cfg.pattern_cfg.func(self.cfg.pattern_cfg,instrinsic,self._device)
+        self.ray_starts, self.ray_directions = self.cfg.pattern_cfg.func(self.cfg.pattern_cfg,self._device)
+        # self.ray_starts = self.ray_starts[0]
+        # self.ray_directions = self.ray_directions[0]
         self.num_rays = len(self.ray_directions)
+        # print(self.ray_directions.shape)
         # apply offset transformation to the rays
         offset_pos = torch.tensor(list(self.cfg.offset.pos), device=self._device)
         offset_quat = torch.tensor(list(self.cfg.offset.rot), device=self._device)
+        # print(offset_quat.repeat(len(self.ray_directions), 1).shape, self.ray_directions.shape)
         self.ray_directions = quat_apply(offset_quat.repeat(len(self.ray_directions), 1), self.ray_directions)
         self.ray_starts += offset_pos
         # repeat the rays for each sensor
         self.ray_starts = self.ray_starts.repeat(self._view.count, 1, 1)
         self.ray_directions = self.ray_directions.repeat(self._view.count, 1, 1)
+        # print(self.ray_starts.shape, self.ray_directions.shape)
         # prepare drift
         self.drift = torch.zeros(self._view.count, 3, device=self.device)
         # fill the data buffer

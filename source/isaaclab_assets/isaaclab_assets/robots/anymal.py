@@ -22,7 +22,7 @@ Reference:
 from isaaclab_assets.sensors.velodyne import VELODYNE_VLP_16_RAYCASTER_CFG
 
 import isaaclab.sim as sim_utils
-from isaaclab.actuators import ActuatorNetLSTMCfg, DCMotorCfg
+from isaaclab.actuators import ActuatorNetLSTMCfg, DCMotorCfg, IdealPDActuatorCfg
 from isaaclab.assets.articulation import ArticulationCfg
 from isaaclab.sensors import RayCasterCfg
 from isaaclab.utils.assets import ISAACLAB_NUCLEUS_DIR
@@ -154,7 +154,7 @@ ANYMAL_D_CFG = ArticulationCfg(
             ".*H_KFE": 0.8,  # both hind KFE
         },
     ),
-    actuators={"legs": ANYDRIVE_3_LSTM_ACTUATOR_CFG},
+    actuators={"legs": ANYDRIVE_3_SIMPLE_ACTUATOR_CFG},
     soft_joint_pos_limit_factor=0.95,
 )
 """Configuration of ANYmal-D robot using actuator-net.
@@ -173,3 +173,57 @@ ANYMAL_LIDAR_CFG = VELODYNE_VLP_16_RAYCASTER_CFG.replace(
     offset=RayCasterCfg.OffsetCfg(pos=(-0.310, 0.000, 0.159), rot=(0.0, 0.0, 0.0, 1.0))
 )
 """Configuration for the Velodyne VLP-16 sensor mounted on the ANYmal robot's base."""
+
+
+
+GMT_SIMPLE_ACTUATOR_CFG = DCMotorCfg(
+    joint_names_expr=[".*hy", ".*kn"],
+    saturation_effort=120.0,
+    effort_limit=80.0,
+    velocity_limit=7.5,
+    stiffness={".*": 40.0},
+    damping={".*": 5.0},
+)
+
+GMT_IDEAL_PD_ACTUATOR_CFG = IdealPDActuatorCfg(
+    joint_names_expr=[".*hy", ".*kn"],
+    # saturation_effort=120.0,
+    effort_limit=80.0,
+    velocity_limit=7.5,
+    stiffness={".*": 40.0},
+    damping={".*": 5.0},
+    # position_gain={".*": 100.0},
+    # velocity_gain={".*": 10.0},
+)
+
+"""Configuration for GMT with DC actuator model."""
+
+GMT_Robot_CFG = ArticulationCfg(
+    spawn=sim_utils.UsdFileCfg(
+        usd_path=f"./Timbot_V4_Fine/configuration/Timbot_V4_Fine_physics.usd",
+        # usd_path=f"{ISAACLAB_NUCLEUS_DIR}/Robots/ANYbotics/ANYmal-D/anymal_d_minimal.usd",
+        activate_contact_sensors=True,
+        rigid_props=sim_utils.RigidBodyPropertiesCfg(
+            disable_gravity=False,
+            retain_accelerations=False,
+            linear_damping=0.0,
+            angular_damping=0.0,
+            max_linear_velocity=1000.0,
+            max_angular_velocity=1000.0,
+            max_depenetration_velocity=1.0,
+        ),
+        articulation_props=sim_utils.ArticulationRootPropertiesCfg(
+            enabled_self_collisions=True, solver_position_iteration_count=4, solver_velocity_iteration_count=0
+        ),
+        # collision_props=sim_utils.CollisionPropertiesCfg(contact_offset=0.02, rest_offset=0.0),
+    ),
+    init_state=ArticulationCfg.InitialStateCfg(
+        pos=(0.0, 0.0, 0.6),
+        joint_pos={
+            ".*hy": 0.0,  # all hy
+            ".*kn": 0.5,  # all Knee kn
+        },
+    ),
+    actuators={"legs": GMT_SIMPLE_ACTUATOR_CFG},
+    soft_joint_pos_limit_factor=0.95,
+)

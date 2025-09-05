@@ -38,7 +38,7 @@ class RayCasterCfg(SensorBaseCfg):
     Note:
         Currently, only a single static mesh is supported. We are working on supporting multiple
         static meshes and dynamic meshes.
-    """
+    """     
 
     offset: OffsetCfg = OffsetCfg()
     """The offset pose of the sensor's frame from the sensor's parent frame. Defaults to identity."""
