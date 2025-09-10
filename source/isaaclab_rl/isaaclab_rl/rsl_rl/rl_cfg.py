@@ -41,6 +41,8 @@ class RslRlPpoActorCriticCfg:
     activation: str = MISSING
     """The activation function for the actor and critic networks."""
 
+    encoder_obs: bool = False
+
 @configclass
 class RslRlPpoQuantileCfg:
     """Configuration for the PPO actor-critic networks."""
