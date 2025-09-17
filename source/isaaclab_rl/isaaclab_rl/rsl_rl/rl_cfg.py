@@ -42,6 +42,9 @@ class RslRlPpoActorCriticCfg:
     """The activation function for the actor and critic networks."""
 
     encoder_obs: bool = False
+    
+
+    navigates: bool = False
 
 @configclass
 class RslRlPpoQuantileCfg:
@@ -79,6 +82,8 @@ class RslRlPpoQuantileCfg:
     quantile_count: int = 200
 
     encoder_obs: bool = False
+
+    navigates: bool = False
 
 
 @configclass
@@ -183,6 +188,8 @@ class RslRlEncoderCfg:
 
     output_dim: int = MISSING
     """The output dimension of the encoder network."""
+
+    obs_indices: int = 15
 
 #########################
 # Runner configurations #
