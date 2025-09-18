@@ -183,13 +183,32 @@ class RslRlEncoderCfg:
     class_name: str = "Encoder"
     """The encoder class name. Default is Encoder."""
 
+    type: str = "mlp"
+    """The type of the encoder network. Default is "mlp"."""
+
     hidden_dims: list[int] = MISSING
     """The hidden dimensions of the encoder network."""
 
     output_dim: int = MISSING
     """The output dimension of the encoder network."""
 
+    gru_hidden_size: int = MISSING
+    """The hidden size of the GRU network. Only used if type is "gru"."""
+
+    gru_num_layers: int = MISSING
+    """The number of layers of the GRU network. Only used if type is "gru"."""
+
+    conv_channels: list[int] = MISSING
+    """The number of channels for each convolutional layer. Only used if type is "conv"."""
+
+    conv_kernel_sizes: list[int] = MISSING
+    """The kernel sizes for each convolutional layer. Only used if type is "conv"."""
+
+    conv_strides: list[int] = MISSING
+    """The strides for each convolutional layer. Only used if type is "conv"."""
+
     obs_indices: int = 15
+    """The indices of the observations to be encoded. Default is 15."""
 
 #########################
 # Runner configurations #
