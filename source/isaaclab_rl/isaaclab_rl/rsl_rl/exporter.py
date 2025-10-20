@@ -55,6 +55,7 @@ class _TorchPolicyExporter(torch.nn.Module):
             self.actor = copy.deepcopy(policy.actor)
             if self.is_recurrent:
                 self.rnn = copy.deepcopy(policy.memory_a.rnn)
+                print("Get RNN model",self.rnn)
         elif hasattr(policy, "student"):
             self.actor = copy.deepcopy(policy.student)
             if self.is_recurrent:
