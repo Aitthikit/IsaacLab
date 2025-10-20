@@ -85,6 +85,8 @@ class RslRlPpoQuantileCfg:
 
     navigates: bool = False
 
+    is_beta: bool = False
+
 
 @configclass
 class RslRlPpoActorCriticRecurrentCfg(RslRlPpoActorCriticCfg):
@@ -172,6 +174,8 @@ class RslRlDppoAlgorithmCfg(RslRlPpoAlgorithmCfg):
 
     distributional_loss_type: str = "energy"
 
+
+
 #########################
 # Encoder configurations #
 #########################
@@ -210,6 +214,9 @@ class RslRlEncoderCfg:
     obs_indices: int = 15
     """The indices of the observations to be encoded. Default is 15."""
 
+    privilaged_obs_indices: int = 0
+    """The dimension of the RNN layers."""
+
 
 @configclass
 class RslRlEncoderDistillationCfg:
@@ -230,10 +237,7 @@ class RslRlEncoderDistillationCfg:
     teacher_hidden_dims: list[int] = MISSING
     """The hidden dimensions of the encoder network."""
 
-    student_output_dim: int = MISSING
-    """The output dimension of the encoder network."""
-
-    teacher_output_dim: int = MISSING
+    output_dim: int = MISSING
     """The output dimension of the encoder network."""
 
     student_gru_hidden_size: int = MISSING
@@ -260,7 +264,7 @@ class RslRlEncoderDistillationCfg:
     teacher_conv_kernel_sizes: list[int] = MISSING
     """The kernel sizes for each convolutional layer. Only used if type is "conv"."""
 
-    student_conv_strides: list[int] = MISSING
+    student_pool_sizes: list[int] = MISSING
     """The strides for each convolutional layer. Only used if type is "conv"."""
 
     teacher_conv_strides: list[int] = MISSING
@@ -268,6 +272,8 @@ class RslRlEncoderDistillationCfg:
 
     obs_indices: int = 15
     """The indices of the observations to be encoded. Default is 15."""
+
+    
     
 #########################
 # Runner configurations #

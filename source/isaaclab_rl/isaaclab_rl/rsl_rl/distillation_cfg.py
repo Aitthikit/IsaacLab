@@ -37,6 +37,10 @@ class RslRlDistillationStudentTeacherCfg:
     activation: str = MISSING
     """The activation function for the student and teacher networks."""
 
+    encoder_obs: bool = False
+
+    navigates: bool = False
+
 
 @configclass
 class RslRlDistillationStudentTeacherRecurrentCfg(RslRlDistillationStudentTeacherCfg):
