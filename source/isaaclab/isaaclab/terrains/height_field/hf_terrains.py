@@ -248,9 +248,15 @@ def discrete_obstacles_terrain(difficulty: float, cfg: hf_terrains_cfg.HfDiscret
     platform_width = int(cfg.platform_width / cfg.horizontal_scale)
 
     # create discrete ranges for the obstacles
-    # -- shape
-    obs_width_range = np.arange(obs_width_min, obs_width_max, 4)
-    obs_length_range = np.arange(obs_width_min, obs_width_max, 4)
+    # -- shape (ensure minimum size of 1 and proper step size)
+    step_size = min(4, max(1, obs_width_max - obs_width_min) // 4)
+    obs_width_range = np.arange(obs_width_min, obs_width_max + 1, step_size)
+    obs_length_range = np.arange(obs_width_min, obs_width_max + 1, step_size)
+    # Ensure ranges are not empty and have minimum size
+    if len(obs_width_range) == 0:
+        obs_width_range = np.array([max(1, obs_width_min)])
+    if len(obs_length_range) == 0:
+        obs_length_range = np.array([max(1, obs_width_min)])
     # -- position
     obs_x_range = np.arange(0, width_pixels, 4)
     obs_y_range = np.arange(0, length_pixels, 4)
@@ -271,13 +277,14 @@ def discrete_obstacles_terrain(difficulty: float, cfg: hf_terrains_cfg.HfDiscret
         # sample position
         x_start = int(np.random.choice(obs_x_range))
         y_start = int(np.random.choice(obs_y_range))
-        # clip start position to the terrain
+        # clip start position to the terrain and ensure non-zero dimensions
         if x_start + width > width_pixels:
-            x_start = width_pixels - width
+            width = max(1, width_pixels - x_start)
         if y_start + length > length_pixels:
-            y_start = length_pixels - length
-        # add to terrain
-        hf_raw[x_start : x_start + width, y_start : y_start + length] = height
+            length = max(1, length_pixels - y_start)
+        # add to terrain if dimensions are valid
+        if width > 0 and length > 0:
+            hf_raw[x_start : x_start + width, y_start : y_start + length] = height
     # clip the terrain to the platform
     x1 = (width_pixels - platform_width) // 2
     x2 = (width_pixels + platform_width) // 2

@@ -1,0 +1,320 @@
+# Copyright (c) 2022-2025, The Isaac Lab Project Developers.
+# All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+"""Configuration for custom terrains."""
+
+import isaaclab.terrains as terrain_gen
+
+from isaaclab.terrains.terrain_generator_cfg import TerrainGeneratorCfg  
+from isaaclab.terrains.sub_terrain_cfg import FlatPatchSamplingCfg
+
+MULTI_TERRAINS_PLANE_CFG = TerrainGeneratorCfg(
+    size=(8.0, 8.0),
+    border_width=20.0,
+    num_rows=4,
+    num_cols=4,
+    horizontal_scale=0.1,
+    vertical_scale=0.005,
+    slope_threshold=0.75,
+    use_cache=False,
+    curriculum = True,
+    difficulty_range = (0.5,1.0),
+    sub_terrains={
+        "plane": terrain_gen.MeshPlaneTerrainCfg(
+            proportion=0.25,
+        ),
+        "hf_pyramid_slope": terrain_gen.HfPyramidSlopedTerrainCfg(
+            proportion=0.25, slope_range=(0.1, 0.15), platform_width=2.0, border_width=0.25,
+        ),
+        "hf_pyramid_slope_inv": terrain_gen.HfInvertedPyramidSlopedTerrainCfg(
+            proportion=0.25, slope_range=(0.1, 0.15), platform_width=2.0, border_width=0.25,
+        ),
+        "randdomobj": terrain_gen.MeshRepeatedBoxesTerrainCfg(
+            proportion=0.25,
+            # object_type="cylinder",
+            platform_width=0.0,
+            object_params_start = terrain_gen.MeshRepeatedBoxesTerrainCfg.ObjectCfg(
+                num_objects= 10,
+                size = (0.25,0.20),
+                height = 0.01,
+                max_yx_angle = 0,
+            ),
+            object_params_end = terrain_gen.MeshRepeatedBoxesTerrainCfg.ObjectCfg(
+                num_objects= 20,
+                size = (0.5,0.4),
+                height = 0.15,
+                max_yx_angle = 0,
+            ),
+        ),
+        # "Obstacle": terrain_gen.HfDiscreteObstaclesTerrainCfg(
+        #     proportion=0.2,
+        #     obstacle_height_mode = "fixed",
+        #     #"""The mode to use for the obstacle height. Defaults to "choice".The following modes are supported: "choice", "fixed"."""
+        #     obstacle_width_range = (0.5,1.0),# """The minimum and maximum width of the obstacles (in m)."""
+        #     obstacle_height_range = (1.0,1.0), # """The minimum and maximum height of the obstacles (in m)."""
+        #     num_obstacles = 10, # """The number of obstacles to generate."""
+        #     platform_width = 2.0, # """The width of the square platform at the center of the terrain. Defaults to 1.0."""
+        # ),       
+    },
+)
+
+
+NAVIGATE_TERRAINS_CFG = TerrainGeneratorCfg(
+    size=(8.0, 8.0),
+    border_width=20.0,
+    num_rows=10,
+    num_cols=20,
+    horizontal_scale=0.1,
+    vertical_scale=0.005,
+    slope_threshold=0.75,
+    use_cache=False,
+    curriculum = False,
+    # difficulty_range = (0.5,1.0),
+    sub_terrains={
+        "plane": terrain_gen.MeshPlaneTerrainCfg(
+            proportion=0.1,
+            flat_patch_sampling = {
+                "target" : FlatPatchSamplingCfg(num_patches=10000,
+                                                patch_radius=0.5,
+                                                max_height_diff=1.00,
+                                                x_range =(-8.00,8.00),
+                                                y_range =(-8.00,8.00),
+                                                )}
+        ),
+        "hf_pyramid_slope": terrain_gen.HfPyramidSlopedTerrainCfg(
+            proportion=0.2, slope_range=(0.1, 0.15), platform_width=2.0, border_width=0.25,
+            flat_patch_sampling = {
+                "target" : FlatPatchSamplingCfg(num_patches=10000,
+                                                patch_radius=0.5,
+                                                max_height_diff=1.00,
+                                                x_range =(-8.00,8.00),
+                                                y_range =(-8.00,8.00),
+                                                z_range =(-0.5,-0.02)
+                                                )}
+            
+        ),
+        "hf_pyramid_slope_inv": terrain_gen.HfInvertedPyramidSlopedTerrainCfg(
+            proportion=0.2, slope_range=(0.1, 0.15), platform_width=2.0, border_width=0.25,
+            flat_patch_sampling = {
+                "target" : FlatPatchSamplingCfg(num_patches=10000,
+                                                patch_radius=0.5,
+                                                max_height_diff=1.00,
+                                                x_range =(-8.00,8.00),
+                                                y_range =(-8.00,8.00),
+                                                z_range =(0.02,0.5)
+                                                )}
+        ),
+        "randdomobj": terrain_gen.MeshRepeatedBoxesTerrainCfg(
+            proportion=0.2,
+            # object_type="cylinder",
+            platform_width=0.0,
+            object_params_start = terrain_gen.MeshRepeatedBoxesTerrainCfg.ObjectCfg(
+                num_objects= 10,
+                size = (0.25,0.20),
+                height = 0.01,
+                max_yx_angle = 0,
+            ),
+            object_params_end = terrain_gen.MeshRepeatedBoxesTerrainCfg.ObjectCfg(
+                num_objects= 20,
+                size = (0.5,0.4),
+                height = 0.15,
+                max_yx_angle = 0,
+            ),
+            flat_patch_sampling = {
+                "target" : FlatPatchSamplingCfg(num_patches=10000,
+                                                patch_radius=0.5,
+                                                max_height_diff=1.00,
+                                                x_range =(-8.00,8.00),
+                                                y_range =(-8.00,8.00),
+                                                z_range =(-0.5,0.5)
+                                                )}
+        ),
+        # "Obstacle2": terrain_gen.MeshRepeatedBoxesTerrainCfg(
+        #     proportion=0.2,
+        #     # object_type="cylinder",
+        #     platform_width=0.0,
+        #     object_params_start = terrain_gen.MeshRepeatedBoxesTerrainCfg.ObjectCfg(
+        #         num_objects= 20,
+        #         size = (0.4,0.4),
+        #         height = 1.0,
+        #         max_yx_angle = 0,
+        #     ),
+        #     object_params_end = terrain_gen.MeshRepeatedBoxesTerrainCfg.ObjectCfg(
+        #         num_objects= 20,
+        #         size = (0.5,0.5),
+        #         height = 1.0,
+        #         max_yx_angle = 0,
+        #     ),
+        #     flat_patch_sampling = {
+        #         "target" : FlatPatchSamplingCfg(num_patches=10000,
+        #                                         patch_radius=0.5,
+        #                                         max_height_diff=1.00,
+        #                                         x_range =(-8.00,8.00),
+        #                                         y_range =(-8.00,8.00),
+        #                                         z_range =(-0.5,0.1)
+        #                                         )}
+        # ),
+        "Obstacle": terrain_gen.HfDiscreteObstaclesTerrainCfg(
+            proportion=0.3,
+            obstacle_height_mode = "fixed",
+            #"""The mode to use for the obstacle height. Defaults to "choice".The following modes are supported: "choice", "fixed"."""
+            obstacle_width_range = (0.5,1.2),# """The minimum and maximum width of the obstacles (in m)."""
+            obstacle_height_range = (1.0,1.0), # """The minimum and maximum height of the obstacles (in m)."""
+            num_obstacles = 10, # """The number of obstacles to generate."""
+            platform_width = 2.0, # """The width of the square platform at the center of the terrain. Defaults to 1.0."""
+            flat_patch_sampling = {
+                "target" : FlatPatchSamplingCfg(num_patches=10000,
+                                                patch_radius=0.5,
+                                                max_height_diff=1.00,
+                                                x_range =(-8.00,8.00),
+                                                y_range =(-8.00,8.00),
+                                                z_range =(-0.5,0.1)
+                                                )}
+        ),
+        # "Obstacle": terrain_gen.HfDiscreteObstaclesTerrainCfg(
+        #     proportion=0.2,
+        #     obstacle_height_mode = "fixed",
+        #     #"""The mode to use for the obstacle height. Defaults to "choice".The following modes are supported: "choice", "fixed"."""
+        #     obstacle_width_range = (0.5,1.0),# """The minimum and maximum width of the obstacles (in m)."""
+        #     obstacle_height_range = (1.0,1.0), # """The minimum and maximum height of the obstacles (in m)."""
+        #     num_obstacles = 10, # """The number of obstacles to generate."""
+        #     platform_width = 2.0, # """The width of the square platform at the center of the terrain. Defaults to 1.0."""
+        #     flat_patch_sampling = {
+        #         "target" : FlatPatchSamplingCfg(num_patches=10000,
+        #                                         patch_radius=0.5,
+        #                                         max_height_diff=1.00,
+        #                                         x_range =(-8.00,8.00),
+        #                                         y_range =(-8.00,8.00),
+        #                                         z_range =(0.0,0.1)
+        #                                         )}
+        # ),       
+    },
+)
+
+MULTI_TERRAINS_BOX_CFG = TerrainGeneratorCfg(
+    size=(8.0, 8.0),
+    border_width=20.0,
+    num_rows=10,
+    num_cols=20,
+    horizontal_scale=0.1,
+    vertical_scale=0.005,
+    slope_threshold=0.75,
+    use_cache=False,
+    sub_terrains={
+        "boxes": terrain_gen.MeshBoxTerrainCfg(
+            proportion=0.8,
+            box_height_range=(0.05,0.15),
+            platform_width = 2,
+            flat_patch_sampling = {
+                "target" : FlatPatchSamplingCfg(num_patches=10000,
+                                                patch_radius=0.5,
+                                                max_height_diff=1.00,
+                                                x_range =(-8.00,8.00),
+                                                y_range =(-8.00,8.00),
+                                                )
+        },
+        ),
+        "pyramid_stairs": terrain_gen.MeshPyramidStairsTerrainCfg(
+            proportion=0.1,
+            step_height_range=(0.05, 0.15),
+            step_width=0.3,
+            platform_width=3.0,
+            border_width=1.0,
+            holes=False,
+            flat_patch_sampling = {
+                "target" : FlatPatchSamplingCfg(num_patches=10000,
+                                                patch_radius=0.5,
+                                                max_height_diff=1.00,
+                                                x_range =(-8.00,8.00),
+                                                y_range =(-8.00,8.00),
+                                                z_range =(-5.2,-0.1)
+                                                )
+        },
+        ),
+        "pyramid_stairs_inv": terrain_gen.MeshInvertedPyramidStairsTerrainCfg(
+            proportion=0.1,
+            step_height_range=(0.05, 0.15),
+            step_width=0.3,
+            platform_width=3.0,
+            border_width=1.0,
+            holes=False,
+            flat_patch_sampling = {
+                "target" : FlatPatchSamplingCfg(num_patches=10000,
+                                                patch_radius=0.5,
+                                                max_height_diff=1.00,
+                                                x_range =(-8.00,8.00),
+                                                y_range =(-8.00,8.00),
+                                                z_range =(0.1,5.2)
+                                                )
+        },
+        ),       
+    },
+)
+
+MULTI_TERRAINS_PIT_CFG = TerrainGeneratorCfg(
+    size=(8.0, 8.0),
+    border_width=20.0,
+    num_rows=10,
+    num_cols=20,
+    horizontal_scale=0.1,
+    vertical_scale=0.005,
+    slope_threshold=0.75,
+    use_cache=False,
+    sub_terrains={
+        "pits": terrain_gen.MeshPitTerrainCfg(
+            proportion=0.8,
+            pit_depth_range=(0.05,0.15),
+            platform_width = 3.5,
+            flat_patch_sampling = {
+                "target" : FlatPatchSamplingCfg(num_patches=10000,
+                                                patch_radius=0.5,
+                                                max_height_diff=1.00,
+                                                x_range =(-8.00,8.00),
+                                                y_range =(-8.00,8.00),
+                                                )
+        },
+        ),
+        "pyramid_stairs": terrain_gen.MeshPyramidStairsTerrainCfg(
+            proportion=0.1,
+            step_height_range=(0.05, 0.15),
+            step_width=0.3,
+            platform_width=3.0,
+            border_width=1.0,
+            holes=False,
+            flat_patch_sampling = {
+                "target" : FlatPatchSamplingCfg(num_patches=10000,
+                                                patch_radius=0.5,
+                                                max_height_diff=1.00,
+                                                x_range =(-8.00,8.00),
+                                                y_range =(-8.00,8.00),
+                                                z_range =(-5.2,-0.1)
+                                                )
+        },
+        ),
+        "pyramid_stairs_inv": terrain_gen.MeshInvertedPyramidStairsTerrainCfg(
+            proportion=0.1,
+            step_height_range=(0.05, 0.15),
+            step_width=0.3,
+            platform_width=3.0,
+            border_width=1.0,
+            holes=False,
+            flat_patch_sampling = {
+                "target" : FlatPatchSamplingCfg(num_patches=10000,
+                                                patch_radius=0.5,
+                                                max_height_diff=1.00,
+                                                x_range =(-8.00,8.00),
+                                                y_range =(-8.00,8.00),
+                                                z_range =(0.1,5.2)
+                                                )
+        },
+        ),       
+    },
+)
+
+
+
+
+
+
