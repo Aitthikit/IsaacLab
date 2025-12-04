@@ -126,7 +126,7 @@ python scripts/reinforcement_learning/rsl_rl/train.py --task Isaac-Velocity-Roug
 
 Train an anymal c to distillation Teacher policy:
 ```bash
-./isaaclab.sh -p 
+python scripts/reinforcement_learning/rsl_rl/train.py --task Isaac-Velocity-Distill-DPPO-Anymal-C-Direct-v0 --num_envs 256
 ```
 
 ## Troubleshooting
