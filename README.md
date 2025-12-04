@@ -121,7 +121,7 @@ Once installed, you can try these example training commands:
 
 Train an anymal c to walk with DPPO algorithm:
 ```bash
-python scripts/reinforcement_learning/rsl_rl/train.py --task Isaac-Velocity-Flat-DPPO-Anymal-C-Direct-v0 --num_envs 1024
+python scripts/reinforcement_learning/rsl_rl/train.py --task Isaac-Velocity-Rough-DPPO-Anymal-C-Direct-v0 --num_envs 1024
 ```
 
 Train an anymal c to distillation Teacher policy:
