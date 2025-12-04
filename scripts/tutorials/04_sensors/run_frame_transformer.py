@@ -158,6 +158,7 @@ def run_simulator(sim: sim_utils.SimulationContext, scene_entities: dict):
             # plain color for lines
             lines_colors = [[1.0, 1.0, 0.0, 1.0]] * source_pos.shape[0]
             line_thicknesses = [5.0] * source_pos.shape[0]
+            print(source_pos.tolist(), target_pos.tolist(), lines_colors, line_thicknesses)
             draw_interface.draw_lines(source_pos.tolist(), target_pos.tolist(), lines_colors, line_thicknesses)
 
 

@@ -11,15 +11,15 @@ import torch
 import isaaclab.sim as sim_utils
 from isaaclab.assets import Articulation
 from isaaclab.envs import DirectRLEnv
-from isaaclab.sensors import ContactSensor, RayCaster
+from isaaclab.sensors import ContactSensor, RayCaster ,RayCasterCamera
 
-from .anymal_c_env_cfg import AnymalCFlatEnvCfg, AnymalCRoughEnvCfg
+from .anymal_c_env_cfg import AnymalCFlatEnvCfg, AnymalCRoughEnvCfg , AnymalCDistillEnvCfg
 
 
-class AnymalCEnv(DirectRLEnv):
-    cfg: AnymalCFlatEnvCfg | AnymalCRoughEnvCfg
+class AnymalCDistillEnv(DirectRLEnv):
+    cfg: AnymalCFlatEnvCfg | AnymalCRoughEnvCfg | AnymalCDistillEnvCfg
 
-    def __init__(self, cfg: AnymalCFlatEnvCfg | AnymalCRoughEnvCfg, render_mode: str | None = None, **kwargs):
+    def __init__(self, cfg: AnymalCFlatEnvCfg | AnymalCRoughEnvCfg | AnymalCDistillEnvCfg, render_mode: str | None = None, **kwargs):
         super().__init__(cfg, render_mode, **kwargs)
 
         # Joint position command (deviation from default joint positions)
@@ -61,9 +61,16 @@ class AnymalCEnv(DirectRLEnv):
             # we add a height scanner for perceptive locomotion
             self._height_scanner = RayCaster(self.cfg.height_scanner)
             self.scene.sensors["height_scanner"] = self._height_scanner
+        if isinstance(self.cfg, AnymalCDistillEnvCfg):
+            self._height_scanner = RayCaster(self.cfg.height_scanner)
+            self.scene.sensors["height_scanner"] = self._height_scanner
+            self._camera_scanner = RayCasterCamera(self.cfg.raycamera_cfg)
+            self.scene.sensors["raycamera"] = self._camera_scanner
+
         self.cfg.terrain.num_envs = self.scene.cfg.num_envs
         self.cfg.terrain.env_spacing = self.scene.cfg.env_spacing
         self._terrain = self.cfg.terrain.class_type(self.cfg.terrain)
+
         # clone and replicate
         self.scene.clone_environments(copy_from_source=False)
         # we need to explicitly filter collisions for CPU simulation
@@ -83,10 +90,18 @@ class AnymalCEnv(DirectRLEnv):
     def _get_observations(self) -> dict:
         self._previous_actions = self._actions.clone()
         height_data = None
+        scan_data = None
         if isinstance(self.cfg, AnymalCRoughEnvCfg):
             height_data = (
                 self._height_scanner.data.pos_w[:, 2].unsqueeze(1) - self._height_scanner.data.ray_hits_w[..., 2] - 0.5
             ).clip(-1.0, 1.0)
+        
+        if isinstance(self.cfg, AnymalCDistillEnvCfg):
+            height_data = (
+                self._height_scanner.data.pos_w[:, 2].unsqueeze(1) - self._height_scanner.data.ray_hits_w[..., 2] - 0.5
+            ).clip(-1.0, 1.0)
+            scan_data = self._camera_scanner.data.output["distance_to_camera"] 
+            scan_data = scan_data.permute(0,3,1,2)
         obs = torch.cat(
             [
                 tensor
@@ -99,7 +114,6 @@ class AnymalCEnv(DirectRLEnv):
                     # height_data,
                     self._actions,
                     self._commands,
-                    height_data,
                 )
                 if tensor is not None
             ],
@@ -114,16 +128,25 @@ class AnymalCEnv(DirectRLEnv):
                     self._robot.data.projected_gravity_b,
                     self._robot.data.joint_pos - self._robot.data.default_joint_pos,
                     self._robot.data.joint_vel,
-                    # height_data,
                     self._actions,
-                    self._commands[:,:3],
+                    self._commands,
                     height_data,
                 )
                 if tensor is not None
             ],
             dim=-1,
         )
-        observations = {"policy": obs , "critic": critic_obs}
+        perception = torch.cat(
+            [
+                tensor
+                for tensor in (
+                    scan_data, 
+                )
+                if tensor is not None
+            ],
+            dim=-1,
+        )
+        observations = {"policy": obs , "teacher": critic_obs , "perception" : perception}
         return observations
 
     def _get_rewards(self) -> torch.Tensor:
@@ -215,3 +238,8 @@ class AnymalCEnv(DirectRLEnv):
         extras["Episode_Termination/base_contact"] = torch.count_nonzero(self.reset_terminated[env_ids]).item()
         extras["Episode_Termination/time_out"] = torch.count_nonzero(self.reset_time_outs[env_ids]).item()
         self.extras["log"].update(extras)
+
+
+
+
+

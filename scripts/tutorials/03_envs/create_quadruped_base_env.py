@@ -60,7 +60,7 @@ from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
 # Pre-defined configs
 ##
 from isaaclab.terrains.config.rough import ROUGH_TERRAINS_CFG  # isort: 
-from isaaclab.terrains.config.GMT_terrain import MULTI_TERRAINS_PLANE_CFG  # isort: skip
+from isaaclab.terrains.config.GMT_terrain import MULTI_TERRAINS_PLANE_CFG  ,NAVIGATE_TERRAINS_CFG # isort: skip
 from isaaclab_assets.robots.anymal import ANYMAL_C_CFG  # isort: skip
 
 
@@ -87,14 +87,18 @@ class MySceneCfg(InteractiveSceneCfg):
     terrain = TerrainImporterCfg(
         prim_path="/World/ground",
         terrain_type="generator",
-        terrain_generator=MULTI_TERRAINS_PLANE_CFG,
-        max_init_terrain_level=5,
+        terrain_generator=NAVIGATE_TERRAINS_CFG,
+        max_init_terrain_level=9,
         collision_group=-1,
         physics_material=sim_utils.RigidBodyMaterialCfg(
             friction_combine_mode="multiply",
             restitution_combine_mode="multiply",
             static_friction=1.0,
             dynamic_friction=1.0,
+        ),
+        visual_material=sim_utils.MdlFileCfg(
+            mdl_path="{NVIDIA_NUCLEUS_DIR}/Materials/Base/Architecture/Shingles_01.mdl",
+            project_uvw=True,
         ),
         debug_vis=False,
     )

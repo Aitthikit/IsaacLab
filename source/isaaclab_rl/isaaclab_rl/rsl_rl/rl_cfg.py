@@ -240,6 +240,12 @@ class RslRlEncoderDistillationCfg:
     output_dim: int = MISSING
     """The output dimension of the encoder network."""
 
+    student_output_dim: int = MISSING
+    """The output dimension of the encoder network."""
+
+    teacher_output_dim: int = MISSING
+    """The output dimension of the encoder network."""
+
     student_gru_hidden_size: int = MISSING
     """The hidden size of the GRU network. Only used if type is "gru"."""
 

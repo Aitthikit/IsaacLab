@@ -10,7 +10,7 @@ from isaaclab.envs import DirectRLEnvCfg
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.scene import InteractiveSceneCfg
-from isaaclab.sensors import ContactSensorCfg, RayCasterCfg, patterns
+from isaaclab.sensors import ContactSensorCfg, RayCasterCfg, patterns ,RayCasterCameraCfg
 from isaaclab.sim import SimulationCfg
 from isaaclab.terrains import TerrainImporterCfg
 from isaaclab.utils import configclass
@@ -113,7 +113,7 @@ class AnymalCFlatEnvCfg(DirectRLEnvCfg):
 @configclass
 class AnymalCRoughEnvCfg(AnymalCFlatEnvCfg):
     # env
-    observation_space = 235
+    observation_space = 236
 
     terrain = TerrainImporterCfg(
         prim_path="/World/ground",
@@ -146,3 +146,100 @@ class AnymalCRoughEnvCfg(AnymalCFlatEnvCfg):
 
     # reward scales (override from flat config)
     flat_orientation_reward_scale = 0.0
+
+
+@configclass
+class AnymalCDistillEnvCfg(DirectRLEnvCfg):
+    # env
+    episode_length_s = 20.0
+    decimation = 4
+    action_scale = 0.5
+    action_space = 12
+    observation_space = 236
+    state_space = 0
+
+    # simulation
+    sim: SimulationCfg = SimulationCfg(
+        dt=1 / 200,
+        render_interval=decimation,
+        physics_material=sim_utils.RigidBodyMaterialCfg(
+            friction_combine_mode="multiply",
+            restitution_combine_mode="multiply",
+            static_friction=1.0,
+            dynamic_friction=1.0,
+            restitution=0.0,
+        ),
+    )
+    terrain = TerrainImporterCfg(
+        prim_path="/World/ground",
+        terrain_type="generator",
+        terrain_generator=ROUGH_TERRAINS_CFG,
+        max_init_terrain_level=9,
+        collision_group=-1,
+        physics_material=sim_utils.RigidBodyMaterialCfg(
+            friction_combine_mode="multiply",
+            restitution_combine_mode="multiply",
+            static_friction=1.0,
+            dynamic_friction=1.0,
+        ),
+        visual_material=sim_utils.MdlFileCfg(
+            mdl_path="{NVIDIA_NUCLEUS_DIR}/Materials/Base/Architecture/Shingles_01.mdl",
+            project_uvw=True,
+        ),
+        debug_vis=False,
+    )
+
+    # scene
+    scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=4096, env_spacing=4.0, replicate_physics=True)
+
+    # events
+    events: EventCfg = EventCfg()
+
+    # robot
+    robot: ArticulationCfg = ANYMAL_C_CFG.replace(prim_path="/World/envs/env_.*/Robot")
+    contact_sensor: ContactSensorCfg = ContactSensorCfg(
+        prim_path="/World/envs/env_.*/Robot/.*", history_length=3, update_period=0.005, track_air_time=True
+    )
+
+    raycamera_cfg = RayCasterCameraCfg(
+        prim_path="/World/envs/env_.*/Robot/base",
+        mesh_prim_paths=["/World/ground"],
+        update_period=0.02,
+        offset=RayCasterCameraCfg.OffsetCfg(pos=(0.1, 0.0, -0.05),rot=(0.354,-0.612,0.612,-0.354)),
+        # offset=RayCasterCameraCfg.OffsetCfg(pos=(0.0, 0.0, 1.30),rot=(0.0,0.0,1.0,0.0)),
+        data_types=["distance_to_image_plane", "normals", "distance_to_camera"],
+        debug_vis=False,
+        depth_clipping_behavior= "zero",
+        pattern_cfg=patterns.PinholeCameraPatternCfg(
+            focal_length=3.5,
+            horizontal_aperture=4.8,
+            height=45,
+            width=60,
+        ),
+    )
+
+     # we add a height scanner for perceptive locomotion
+    height_scanner = RayCasterCfg(
+        prim_path="/World/envs/env_.*/Robot/base",
+        offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 20.0)),
+        attach_yaw_only=True,
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[1.6, 1.0]),
+        debug_vis=False,
+        mesh_prim_paths=["/World/ground"],
+    )
+
+    # locomotion_model = "/home/robotics01/Documents/Big_F9/IsaacLab/logs/rsl_rl/Anymal_locomotion_risk_fix/Anymal_locomotion/exported/policy.pt"
+    # encoder_model = "/home/robotics01/Documents/Big_F9/IsaacLab/logs/rsl_rl/Anymal_locomotion_risk_fix/Anymal_locomotion/exported/encoder.pt"
+    encoderbase_model = "/home/robotics01/Documents/Big_F9/IsaacLab/logs/rsl_rl/Anymal_locomotion_risk_fix/Anymal_locomotion/model_4999.pt"
+
+    # reward scales
+    lin_vel_reward_scale = 1.0
+    yaw_rate_reward_scale = 0.5
+    z_vel_reward_scale = -2.0
+    ang_vel_reward_scale = -0.05
+    joint_torque_reward_scale = -2.5e-5
+    joint_accel_reward_scale = -2.5e-7
+    action_rate_reward_scale = -0.01
+    feet_air_time_reward_scale = 0.0 #0.5
+    undesired_contact_reward_scale = -1.0
+    flat_orientation_reward_scale = -5.0
